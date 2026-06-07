@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSPy + GEPA + Hermes: Interactive Learning Guide</title>
+<style>
+/* ===== RESET & TOKENS ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#111120;--surface2:#191928;--border:#252540;
+  --text:#c8d6ef;--dim:#6475a0;
+  --dspy:#5ba3f5;--dspy-d:rgba(91,163,245,.12);--dspy-b:rgba(91,163,245,.35);
+  --gepa:#f5a623;--gepa-d:rgba(245,166,35,.12);--gepa-b:rgba(245,166,35,.35);
+  --herm:#b06cf5;--herm-d:rgba(176,108,245,.12);--herm-b:rgba(176,108,245,.35);
+  --grn:#52e0a0;--grn-d:rgba(82,224,160,.12);--grn-b:rgba(82,224,160,.35);
+  --red:#f56b6b;--code:#0c0c18;--r:8px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.7;min-height:100vh}
+
+/* ===== NAV ===== */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,15,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:4px}
+.nav-logo{font-size:13px;font-weight:700;color:var(--dim);letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+.ntab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;border:1px solid transparent;transition:.2s;color:var(--dim);background:none;white-space:nowrap}
+.ntab:hover{background:var(--surface2);color:var(--text)}
+.ntab.ad{background:var(--dspy-d);color:var(--dspy);border-color:var(--dspy-b)}
+.ntab.ag{background:var(--gepa-d);color:var(--gepa);border-color:var(--gepa-b)}
+.ntab.ah{background:var(--herm-d);color:var(--herm);border-color:var(--herm-b)}
+.ntab.ai{background:var(--grn-d);color:var(--grn);border-color:var(--grn-b)}
+
+/* ===== SECTIONS ===== */
+.sec{display:none}.sec.on{display:block}
+.wrap{max-width:920px;margin:0 auto;padding:36px 22px}
+
+/* ===== HERO ===== */
+.hero{padding:64px 22px 44px;text-align:center}
+.hero h1{font-size:clamp(26px,4.5vw,50px);font-weight:800;line-height:1.2;margin-bottom:14px}
+.hero p{font-size:17px;color:var(--dim);max-width:540px;margin:0 auto 24px}
+.pill{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 18px;font-size:12px;color:var(--dim)}
+.pill span{color:var(--border)}
+
+/* ===== TYPOGRAPHY ===== */
+h2{font-size:24px;font-weight:700;margin:0 0 14px}
+h3{font-size:18px;font-weight:600;margin:0 0 10px}
+h4{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+p{margin-bottom:12px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:20px;margin-bottom:10px}li{margin-bottom:4px}
+strong{font-weight:600;color:var(--text)}
+.td{color:var(--dspy)}.tg{color:var(--gepa)}.th{color:var(--herm)}.tn{color:var(--grn)}.tdim{color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+/* ===== CARDS ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:18px}
+.cd{border-left:3px solid var(--dspy)}.cg{border-left:3px solid var(--gepa)}
+.ch{border-left:3px solid var(--herm)}.cn{border-left:3px solid var(--grn)}
+
+/* ===== CODE ===== */
+pre{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12.5px;line-height:1.65;margin:14px 0}
+code{background:rgba(91,163,245,.12);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--dspy)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#ff79c6}.st{color:#f1fa8c}.cm{color:#5060a0;font-style:italic}
+.fn{color:#50fa7b}.cl{color:#8be9fd}.nu{color:#bd93f9}.va{color:#ffb86c}
+
+/* ===== CALLOUTS ===== */
+.call{border-radius:var(--r);padding:14px 18px;margin:14px 0;border-left:4px solid}
+.ci{background:var(--dspy-d);border-color:var(--dspy)}.cw{background:var(--gepa-d);border-color:var(--gepa)}
+.ct{background:var(--grn-d);border-color:var(--grn)}.ca{background:var(--herm-d);border-color:var(--herm)}
+.call strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ci strong{color:var(--dspy)}.cw strong{color:var(--gepa)}.ct strong{color:var(--grn)}.ca strong{color:var(--herm)}
+
+/* ===== TABLES ===== */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{padding:9px 13px;text-align:left;background:var(--surface2);color:var(--dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+/* ===== GRIDS ===== */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:620px){.g2,.g3{grid-template-columns:1fr}nav{overflow-x:auto}}
+
+/* ===== INTERACTIVE ARCH DIAGRAM ===== */
+.arch-wrap{background:var(--code);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:20px 0}
+.arch-wrap svg{display:block;width:100%;max-height:180px}
+.node-btn{cursor:pointer}
+.node-btn rect{transition:fill .2s,stroke .2s}
+.node-btn:hover rect,.node-btn.sel rect{stroke:var(--dspy)!important;fill:#1c2035!important}
+.dpanel{display:none;padding:18px;border-top:1px solid var(--border);background:var(--surface2);animation:sld .2s ease}
+.dpanel.on{display:block}
+@keyframes sld{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== GEPA LOOP ===== */
+.loop-wrap{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:20px 0}
+.stages{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
+.stage{display:flex;flex-direction:column;align-items:center;padding:12px 14px;border-radius:var(--r);border:2px solid var(--border);cursor:pointer;transition:.25s;min-width:100px;text-align:center;background:var(--surface)}
+.stage:hover,.stage.on{border-color:var(--gepa);background:var(--gepa-d);transform:scale(1.04)}
+.sarr{color:var(--gepa);font-size:18px;padding:0 2px}
+.sico{font-size:22px;margin-bottom:3px}
+.sname{font-weight:700;font-size:12px;color:var(--gepa)}
+.sdesc{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.4}
+.sdtl{display:none;margin-top:16px;padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--gepa-b);text-align:left;animation:sld .2s ease}
+.sdtl.on{display:block}
+
+/* ===== TIMELINE ===== */
+.tl{padding-left:28px;position:relative;margin:20px 0}
+.tl::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+.ti{position:relative;margin-bottom:20px;cursor:pointer}
+.tdot{position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--herm);background:var(--bg);transition:.2s}
+.ti.on .tdot,.ti:hover .tdot{background:var(--herm)}
+.thead{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);transition:.2s}
+.ti.on .thead,.ti:hover .thead{border-color:var(--herm);background:var(--herm-d)}
+.tbadge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--herm-d);color:var(--herm);font-weight:700;white-space:nowrap}
+.tstat{margin-left:auto;font-size:12px;white-space:nowrap}
+.tbody{display:none;padding:14px;margin-top:6px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);animation:sld .2s ease}
+.ti.on .tbody{display:block}
+
+/* ===== STEPS ===== */
+.steps{counter-reset:s}
+.step{counter-increment:s;position:relative;padding:13px 14px 13px 48px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{content:counter(s);position:absolute;left:14px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--dspy);color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+/* ===== COMPARE ===== */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cbad{border:1px solid rgba(245,107,107,.3);background:rgba(245,107,107,.06);border-radius:var(--r);padding:14px}
+.cgood{border:1px solid rgba(82,224,160,.3);background:rgba(82,224,160,.06);border-radius:var(--r);padding:14px}
+@media(max-width:620px){.cmp{grid-template-columns:1fr}}
+
+/* ===== ADAPTERS ===== */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
+.acard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:.2s}
+.acard:hover{border-color:var(--gepa);background:var(--gepa-d);transform:translateY(-2px)}
+.aico{font-size:26px;margin-bottom:6px}
+.aname{font-weight:700;font-size:13px}
+.astat{font-size:11px;color:var(--dim);margin-top:3px}
+
+/* ===== QUIZ ===== */
+.qcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.qopt{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.2s;font-size:13.5px}
+.qopt:hover{border-color:var(--dspy);background:var(--dspy-d)}
+.qopt:disabled{cursor:default}
+.qopt.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt.wrong{border-color:var(--red);background:rgba(245,107,107,.1);color:var(--red)}
+.qfb{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb.on{display:block}.qfb.ok{background:var(--grn-d);border-color:var(--grn)}.qfb.bad{background:rgba(245,107,107,.1);border-color:var(--red)}
+
+/* ===== MISC ===== */
+.mono{font-family:'JetBrains Mono',monospace;font-size:.875em}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.arch-txt{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:20px;overflow-x:auto;white-space:pre}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">DSPy + GEPA + Hermes</span>
+  <button class="ntab ad" onclick="show('dspy',this,'ad')">&#9889; DSPy</button>
+  <button class="ntab" onclick="show('gepa',this,'ag')">&#x1F9EC; GEPA</button>
+  <button class="ntab" onclick="show('hermes',this,'ah')">&#x1F40D; Hermes</button>
+  <button class="ntab" onclick="show('big',this,'ai')">&#x1F517; Big Picture</button>
+</nav>
+
+<!-- ============================================================ -->
+<!-- DSPY SECTION -->
+<!-- ============================================================ -->
+<section id="sec-dspy" class="sec on">
+
+<div class="hero" style="background:radial-gradient(ellipse at top,rgba(91,163,245,.1) 0%,transparent 60%)">
+  <h1><span class="td">DSPy</span> &mdash; The AI Compiler</h1>
+  <p>Stop writing prompts by hand. DSPy lets you <em>declare</em> what you want from an AI and <em>automatically finds</em> the best prompt to get it.</p>
+  <div class="pill"><span>Python library</span><span>&#183;</span><span>Works with Claude, GPT, Gemini</span><span>&#183;</span><span>No GPU needed</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- PROBLEM -->
+<h2>The Problem DSPy Solves</h2>
+
+<div class="call ca">
+  <strong>Analogy first</strong>
+  Imagine writing a web application where you had to manually write every CPU instruction. That would be insane &mdash; you use a compiler. Building LLM apps without DSPy is the same: you are manually "compiling" prompts by hand, and every time you change the AI model, they break.
+</div>
+
+<div class="cmp">
+  <div class="cbad">
+    <h4 style="color:var(--red)">Without DSPy</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="st">"You are an expert. Given the question:
+{question}
+And this context: {context}
+Please answer precisely. Use Vancouver
+citation format. Cite everything.
+Maximum 300 words. Do not use..."</span></code></pre>
+    <p style="font-size:13px;color:var(--dim)">Fragile. Hard-coded. Breaks when you change models. Impossible to optimize systematically.</p>
+  </div>
+  <div class="cgood">
+    <h4 style="color:var(--grn)">With DSPy</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="kw">class</span> <span class="cl">Answer</span>(<span class="cl">dspy.Signature</span>):
+    question: <span class="cl">str</span> = <span class="cl">InputField</span>()
+    context:  <span class="cl">str</span> = <span class="cl">InputField</span>()
+    answer:   <span class="cl">str</span> = <span class="cl">OutputField</span>()</code></pre>
+    <p style="font-size:13px;color:var(--dim)">Declarative. Model-agnostic. The prompt text is generated and optimized automatically.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- ARCHITECTURE -->
+<h2>The Three Core Abstractions</h2>
+<p>Every DSPy program is built from exactly three things. <strong>Click each block</strong> to learn what it does:</p>
+
+<div class="arch-wrap">
+  <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+    <!-- Signature Node -->
+    <g class="node-btn" id="nd-sig" onclick="selNode('sig')">
+      <rect x="28" y="28" width="168" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="112" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128203;</text>
+      <text x="112" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Signature</text>
+      <text x="112" y="108" text-anchor="middle" font-size="11" fill="#6475a0">WHAT to do</text>
+      <text x="112" y="124" text-anchor="middle" font-size="11" fill="#6475a0">inputs &#8594; outputs</text>
+    </g>
+    <!-- Arrow 1 -->
+    <line x1="197" y1="80" x2="252" y2="80" stroke="#252540" stroke-width="2"/>
+    <polygon points="252,75 264,80 252,85" fill="#252540"/>
+    <text x="230" y="73" text-anchor="middle" font-size="10" fill="#404065">used by</text>
+    <!-- Module Node -->
+    <g class="node-btn" id="nd-mod" onclick="selNode('mod')">
+      <rect x="264" y="28" width="168" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="348" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#9881;&#65039;</text>
+      <text x="348" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Module</text>
+      <text x="348" y="108" text-anchor="middle" font-size="11" fill="#6475a0">HOW to do it</text>
+      <text x="348" y="124" text-anchor="middle" font-size="11" fill="#6475a0">execution strategy</text>
+    </g>
+    <!-- Arrow 2 -->
+    <line x1="433" y1="80" x2="488" y2="80" stroke="#252540" stroke-width="2"/>
+    <polygon points="488,75 500,80 488,85" fill="#252540"/>
+    <text x="466" y="73" text-anchor="middle" font-size="10" fill="#404065">compiled by</text>
+    <!-- Optimizer Node -->
+    <g class="node-btn" id="nd-opt" onclick="selNode('opt')">
+      <rect x="500" y="28" width="172" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="586" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128295;</text>
+      <text x="586" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Optimizer</text>
+      <text x="586" y="108" text-anchor="middle" font-size="11" fill="#6475a0">HOW GOOD + improve</text>
+      <text x="586" y="124" text-anchor="middle" font-size="11" fill="#6475a0">auto-tune prompts</text>
+    </g>
+  </svg>
+
+  <!-- Detail: Signature -->
+  <div id="dp-sig" class="dpanel">
+    <h3 class="td">&#128203; Signature &mdash; The Contract</h3>
+    <p>A Signature declares <strong>what goes in</strong> (inputs) and <strong>what should come out</strong> (outputs) from an AI call &mdash; without saying anything about <em>how</em> to get there. Think of it as a typed function signature, but for an AI.</p>
+    <div class="g2" style="margin-top:14px">
+      <div>
+        <h4>String form (quickest)</h4>
+        <pre><code><span class="cm"># Minimal: "input -> output"</span>
+qa = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"question -> answer"</span>)
+result = qa(question=<span class="st">"What is DSPy?"</span>)
+<span class="fn">print</span>(result.answer)
+
+<span class="cm"># With type hints</span>
+clf = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"text -> label: bool"</span>)</code></pre>
+      </div>
+      <div>
+        <h4>Class form (full power)</h4>
+        <pre><code><span class="kw">class</span> <span class="cl">SummarizeCode</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Summarize what this code does
+    in plain English."""</span>
+    code:    <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>()
+    summary: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(
+        desc=<span class="st">"2-3 sentence summary"</span>
+    )</code></pre>
+      </div>
+    </div>
+    <div class="call ct" style="margin-top:10px">
+      <strong>Key Insight</strong>
+      The docstring becomes the instruction to the AI. The optimizer can <em>rewrite both the docstring and the field descriptions</em> to find the phrasing that works best. That is how automatic optimization works.
+    </div>
+  </div>
+
+  <!-- Detail: Module -->
+  <div id="dp-mod" class="dpanel">
+    <h3 class="td">&#9881;&#65039; Module &mdash; The Strategy</h3>
+    <p>A Module wraps a Signature and adds a <strong>prompting strategy</strong> &mdash; the technique used to coax the AI into giving the best answer. Two modules can share the same Signature but prompt the AI in completely different ways.</p>
+    <table style="margin-top:12px">
+      <tr><th>Module</th><th>Strategy</th><th>Use when&hellip;</th></tr>
+      <tr><td><code>Predict</code></td><td>Direct answer, no extras</td><td>Simple, fast tasks</td></tr>
+      <tr><td><code>ChainOfThought</code></td><td>Think step-by-step, then answer</td><td>Reasoning problems</td></tr>
+      <tr><td><code>ReAct</code></td><td>Reason + call tools in a loop</td><td>Agentic tool-use</td></tr>
+      <tr><td><code>ProgramOfThought</code></td><td>Write &amp; execute code to get answer</td><td>Math, computation</td></tr>
+      <tr><td><code>MultiChainComparison</code></td><td>Try N approaches, pick best</td><td>High-stakes decisions</td></tr>
+    </table>
+    <div class="call ci" style="margin-top:10px">
+      <strong>Same Contract, Different Strategy</strong>
+      You can swap <code>Predict</code> for <code>ChainOfThought</code> at any time without changing your Signature. The "what" stays fixed; only the "how" changes. This separation is what makes DSPy programs easy to improve.
+    </div>
+  </div>
+
+  <!-- Detail: Optimizer -->
+  <div id="dp-opt" class="dpanel">
+    <h3 class="td">&#128295; Optimizer &mdash; The Compiler</h3>
+    <p>The Optimizer takes your program + training examples + a scoring function and <strong>automatically searches for better prompts</strong>. No gradients. No GPU. Just discrete search over text.</p>
+    <div class="steps" style="margin-top:12px">
+      <div class="step"><strong>Bootstrap</strong> &mdash; Run your unoptimized program on training examples. Collect execution traces (every AI call + its output).</div>
+      <div class="step"><strong>Generate Candidates</strong> &mdash; Extract successful traces as few-shot examples. Ask another LLM to propose improved instruction variants.</div>
+      <div class="step"><strong>Evaluate</strong> &mdash; Test each instruction+demo combination on a held-out validation set. Score with your metric function.</div>
+      <div class="step"><strong>Select Winner</strong> &mdash; Save the best combination as a <code>.json</code> file. Load it later with zero re-optimization.</div>
+    </div>
+    <div class="call ct" style="margin-top:8px">
+      <strong>No GPU, No Gradients</strong>
+      Everything is text search evaluated by running the program and scoring the output. Works with closed-source APIs (Claude, GPT, Gemini). The compiled <code>.json</code> is just the winning prompt text &mdash; extract it and use it anywhere.
+    </div>
+  </div>
+</div><!-- /arch-wrap -->
+
+<hr>
+
+<!-- FULL EXAMPLE -->
+<h2>Building Your First DSPy Program</h2>
+<p>Here is a complete working example with every step explained:</p>
+
+<pre><code><span class="kw">import</span> dspy
+
+<span class="cm"># ─── Step 1: Connect to an LLM ────────────────────────────────────────</span>
+lm = <span class="cl">dspy</span>.<span class="fn">LM</span>(<span class="st">"anthropic/claude-sonnet-4-20250514"</span>)
+<span class="cl">dspy</span>.<span class="fn">configure</span>(lm=lm)
+
+<span class="cm"># ─── Step 2: Declare WHAT you want (Signature) ───────────────────────</span>
+<span class="kw">class</span> <span class="cl">AnswerWithReasoning</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question based on the provided context.
+    Cite sources using [1], [2] notation."""</span>
+    question: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"The user's question"</span>)
+    context:  <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"Background information"</span>)
+    answer:   <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(desc=<span class="st">"Precise answer with citations"</span>)
+
+<span class="cm"># ─── Step 3: Define HOW to execute (Module) ──────────────────────────</span>
+<span class="kw">class</span> <span class="cl">SmartQA</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="cm"># ChainOfThought adds a "rationale" step before the answer</span>
+        <span class="va">self</span>.answer = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="cl">AnswerWithReasoning</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, question, context):
+        <span class="kw">return</span> <span class="va">self</span>.answer(question=question, context=context)
+
+<span class="cm"># ─── Step 4: Run it immediately (no optimization required yet) ────────</span>
+qa = <span class="cl">SmartQA</span>()
+result = qa(
+    question=<span class="st">"What is gradient descent?"</span>,
+    context=<span class="st">"Gradient descent minimizes a function by moving against the gradient..."</span>
+)
+<span class="fn">print</span>(result.rationale)  <span class="cm"># The reasoning trace (added by ChainOfThought)</span>
+<span class="fn">print</span>(result.answer)     <span class="cm"># The final answer</span>
+
+<span class="cm"># ─── Step 5: Optimize it against your own examples ───────────────────</span>
+<span class="kw">def</span> <span class="fn">my_metric</span>(example, prediction, trace=<span class="kw">None</span>):
+    <span class="cm"># Return 0.0-1.0: how good was this prediction?</span>
+    <span class="kw">return</span> <span class="fn">score_answer</span>(prediction.answer, example.expected_answer)
+
+optimizer = <span class="cl">dspy</span>.<span class="fn">MIPROv2</span>(metric=my_metric, auto=<span class="st">"medium"</span>)
+compiled  = optimizer.<span class="fn">compile</span>(qa, trainset=your_training_data)
+compiled.<span class="fn">save</span>(<span class="st">"optimized_qa.json"</span>)   <span class="cm"># Reuse forever, no re-optimizing</span>
+
+<span class="cm"># ─── Later: load without any re-optimization ─────────────────────────</span>
+qa2 = <span class="cl">SmartQA</span>()
+qa2.<span class="fn">load</span>(<span class="st">"optimized_qa.json"</span>)         <span class="cm"># Instant, cheap to run</span></code></pre>
+
+<hr>
+
+<!-- COMPOSING MODULES -->
+<h2>Composing Multiple Modules into a Pipeline</h2>
+<p>The real power of DSPy is that you can chain modules in plain Python &mdash; any <code>if</code>, <code>for</code>, or function call is fine. The structure is implicit in your Python code.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">ResearchPipeline</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="cm"># Three sub-modules, each with its own signature</span>
+        <span class="va">self</span>.find_papers  = <span class="cl">dspy</span>.<span class="fn">ReAct</span>(<span class="st">"topic -> papers: list"</span>, tools=[search_arxiv])
+        <span class="va">self</span>.synthesize   = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"topic, papers -> synthesis, gaps"</span>)
+        <span class="va">self</span>.write_review = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"topic, synthesis, gaps -> review: str"</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, topic):
+        papers    = <span class="va">self</span>.find_papers(topic=topic)
+        synthesis = <span class="va">self</span>.synthesize(topic=topic, papers=papers.papers)
+        review    = <span class="va">self</span>.write_review(
+            topic=topic,
+            synthesis=synthesis.synthesis,
+            gaps=synthesis.gaps
+        )
+        <span class="kw">return</span> review
+
+<span class="cm"># Compile the whole pipeline at once</span>
+<span class="cm"># The optimizer improves ALL three sub-modules simultaneously</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(metric=review_quality_metric)  <span class="cm"># See GEPA tab!</span>
+compiled  = optimizer.<span class="fn">compile</span>(<span class="cl">ResearchPipeline</span>(), trainset=data)</code></pre>
+
+<hr>
+
+<!-- OPTIMIZER TABLE -->
+<h2>Which Optimizer Should You Use?</h2>
+
+<table>
+  <tr><th>Optimizer</th><th>Strategy</th><th>Best For</th><th>Evaluations Needed</th></tr>
+  <tr>
+    <td><code>BootstrapFewShot</code></td>
+    <td>Collect successful traces as examples</td>
+    <td>Quick baseline, small datasets</td>
+    <td>~50&ndash;200</td>
+  </tr>
+  <tr>
+    <td><code>MIPROv2</code></td>
+    <td>Bayesian search over instruction+example combos</td>
+    <td>General purpose, single-module</td>
+    <td>~200&ndash;1000</td>
+  </tr>
+  <tr>
+    <td style="color:var(--gepa)"><code>GEPA</code> &#10024;</td>
+    <td>Reflective evolutionary search (see GEPA tab)</td>
+    <td>Complex pipelines, agents, tool use</td>
+    <td>100&ndash;500</td>
+  </tr>
+  <tr>
+    <td><code>GRPO</code></td>
+    <td>Gradient-based RL, fine-tunes model weights</td>
+    <td>When you have a GPU</td>
+    <td>5,000&ndash;25,000+</td>
+  </tr>
+</table>
+
+<div class="call cw">
+  <strong>When to choose GEPA over MIPROv2</strong>
+  If your program has multiple steps, uses tools, or fails in complex ways that are hard to score with a single number &mdash; use GEPA. It can read the full execution trace and diagnose <em>exactly where</em> the failure occurred, then propose a targeted fix.
+</div>
+
+<hr>
+
+<!-- QUIZ -->
+<h2>Check Your Understanding</h2>
+
+<div class="qcard">
+  <p><strong>Q: You want to build a system that searches the web for papers and summarizes them. Which DSPy module would you use for the search step?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d1')">Predict</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ChainOfThought</button>
+    <button class="qopt" onclick="qa(this,true,'d1')">ReAct</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ProgramOfThought</button>
+  </div>
+  <div id="qf-d1" class="qfb ok"><strong>Correct!</strong> ReAct (Reason + Act) is the module designed for tool-using agents. It lets the AI call your search function and reason about the results in a loop until it has enough information. The other modules don't support tool calls.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: After running the optimizer, what artifact does it produce that you can save and reuse?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d2')">A trained neural network file (.pt)</button>
+    <button class="qopt" onclick="qa(this,true,'d2')">A .json file containing the optimized prompts</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A new Python class</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A Docker image with the fine-tuned model</button>
+  </div>
+  <div id="qf-d2" class="qfb ok"><strong>Correct!</strong> The compiled output is just a <code>.json</code> containing the winning instruction text and few-shot examples. No GPU, no model weights. You can load it instantly any time without re-running the optimizer.</div>
+</div>
+
+</div><!-- /wrap -->
+</section>
+
+
+<!-- ============================================================ -->
+<!-- GEPA SECTION -->
+<!-- ============================================================ -->
+<section id="sec-gepa" class="sec">
+
+<div class="hero" style="background:radial-gradient(ellipse at top,rgba(245,166,35,.1) 0%,transparent 60%)">
+  <h1><span class="tg">GEPA</span> &mdash; The Evolutionary Optimizer</h1>
+  <p>Evolution for prompts. GEPA uses an AI to read failure logs, understand <em>why</em> something went wrong, and propose a targeted fix. Then it repeats.</p>
+  <div class="pill" style="border-color:var(--gepa-b)"><span>35x cheaper than RL</span><span>&#183;</span><span>No GPU</span><span>&#183;</span><span>Human-readable logs</span></div>
+</div>
+
+<div class="wrap">
+
+<h2>Why Not Just Use Reinforcement Learning?</h2>
+
+<div class="call ca">
+  <strong>Analogy</strong>
+  Imagine teaching someone to bake by only ever saying <strong>"that scored 0.4"</strong> after each attempt. That is Reinforcement Learning. GEPA instead says: <strong>"The cake was good but you used too much salt in step 2, and you forgot to preheat the oven."</strong> Now the learner knows exactly what to fix.
+</div>
+
+<div class="cmp">
+  <div class="cbad">
+    <h4 style="color:var(--red)">Reinforcement Learning (RL)</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Returns a <strong>scalar reward</strong>: "0.43"</li>
+      <li>Needs 5,000&ndash;25,000+ evaluations to converge</li>
+      <li>Requires GPU + direct model weight access</li>
+      <li>Cannot explain <em>why</em> something failed</li>
+      <li>Takes hours to days to run</li>
+      <li>Expensive compute infrastructure</li>
+    </ul>
+  </div>
+  <div class="cgood">
+    <h4 style="color:var(--grn)">GEPA</h4>
+    <ul style="font-size:13.5px">
+      <li>Reads <strong>full execution traces</strong>: "step 3 failed because&hellip;"</li>
+      <li>Needs only 100&ndash;500 evaluations</li>
+      <li>API-only, no GPU required</li>
+      <li>Human-readable improvement logs</li>
+      <li>Takes minutes to a few hours</li>
+      <li>Costs ~$2&ndash;10 per optimization run</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<!-- LOOP DIAGRAM -->
+<h2>The GEPA Optimization Loop</h2>
+<p>GEPA runs in repeated cycles. <strong>Click each stage</strong> to see exactly what happens:</p>
+
+<div class="loop-wrap">
+  <div class="stages">
+    <div class="stage on" id="st-eval" onclick="selStage('eval')">
+      <span class="sico">&#128202;</span>
+      <span class="sname">EVALUATE</span>
+      <span class="sdesc">Run prompts on<br>test examples</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-refl" onclick="selStage('refl')">
+      <span class="sico">&#128269;</span>
+      <span class="sname">REFLECT</span>
+      <span class="sdesc">AI reads traces,<br>diagnoses failures</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-muta" onclick="selStage('muta')">
+      <span class="sico">&#9998;&#65039;</span>
+      <span class="sname">MUTATE</span>
+      <span class="sdesc">AI proposes<br>targeted fixes</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-sel" onclick="selStage('sel')">
+      <span class="sico">&#127942;</span>
+      <span class="sname">SELECT</span>
+      <span class="sdesc">Keep best on<br>Pareto front</span>
+    </div>
+    <span class="sarr" style="color:var(--dim);font-size:14px">&#8617;</span>
+  </div>
+
+  <div id="sd-eval" class="sdtl on">
+    <h4 class="tg">&#128202; Evaluate</h4>
+    <p>GEPA runs each candidate prompt on your test examples. For every example it captures <em>three</em> things, not just a score:</p>
+    <ul style="font-size:13.5px;color:var(--dim);margin-top:8px">
+      <li><strong style="color:var(--text)">Score</strong> &mdash; How well the output matched expectations (0.0&ndash;1.0)</li>
+      <li><strong style="color:var(--text)">Execution trace</strong> &mdash; Every step the AI took, including tool calls, reasoning, and intermediate outputs</li>
+      <li><strong style="color:var(--text)">Feedback string</strong> &mdash; Your natural-language description of what went right or wrong</li>
+    </ul>
+    <p style="font-size:13px;margin-top:10px;color:var(--dim)">This richness is the key difference from RL, which only sees the scalar score.</p>
+  </div>
+
+  <div id="sd-refl" class="sdtl">
+    <h4 class="tg">&#128269; Reflect</h4>
+    <p>A <strong>Reflection LLM</strong> (e.g., GPT-5 or Claude Opus) reads the execution traces from failed or low-scoring runs and produces a natural-language diagnosis:</p>
+    <pre style="font-size:12px;margin:10px 0"><code><span class="cm"># What GEPA sends to the Reflection LLM:</span>
+<span class="st">"""
+Prompt: "Answer the question concisely."
+Test case: "What is gradient descent?"
+Expected: A clear mathematical explanation with the update rule
+Actual: "Gradient descent finds the minimum of a function."
+Feedback: "Too vague. Missing the update rule: theta -= lr * grad(L)"
+Trace: [single AI call, no reasoning step, no equations]
+
+Diagnose the failure. What specifically needs to change in the prompt?
+"""</span></code></pre>
+    <p style="font-size:13.5px;margin-top:8px">Reflection LLM responds: <em>"The prompt does not request mathematical detail. It needs to specify that technical answers should include the update rule and relevant notation."</em></p>
+  </div>
+
+  <div id="sd-muta" class="sdtl">
+    <h4 class="tg">&#9998;&#65039; Mutate</h4>
+    <p>Based on the reflection, GEPA generates <strong>N new prompt candidates</strong> that address the diagnosed issue. These are <em>semantic</em> mutations guided by understanding &mdash; not random noise.</p>
+    <pre style="font-size:12px;margin:10px 0"><code><span class="cm"># Mutation examples:</span>
+<span class="va">original</span>:   <span class="st">"Answer the question concisely."</span>
+
+<span class="va">mutation_1</span>: <span class="st">"Answer the question. For algorithm or math questions,
+             include the formal update rule or equation."</span>
+
+<span class="va">mutation_2</span>: <span class="st">"Provide a precise technical answer with: (1) an intuitive
+             explanation, (2) the mathematical formulation, (3) key
+             parameters. Use LaTeX notation for equations."</span></code></pre>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--surface);border-radius:6px;font-size:13px;color:var(--dim)">
+      <strong style="color:var(--gepa)">Evolutionary Memory:</strong> Each mutation also inherits lessons from all ancestral candidates in the search tree &mdash; so improvements compound across generations.
+    </div>
+  </div>
+
+  <div id="sd-sel" class="sdtl">
+    <h4 class="tg">&#127942; Select &mdash; The Pareto Front</h4>
+    <p>New candidates are evaluated, then added to the <strong>Pareto Front</strong> if they are "non-dominated." A candidate is non-dominated when no other candidate beats it on <em>all</em> objectives at once.</p>
+    <p style="font-size:13.5px;margin-top:8px;color:var(--dim)">This gives you a menu of candidates at different quality/cost trade-offs, rather than collapsing to a single winner:</p>
+    <div style="margin-top:12px;text-align:center">
+      <svg viewBox="0 0 320 200" style="max-width:320px;border:1px solid var(--border);border-radius:6px">
+        <rect width="320" height="200" fill="#0c0c18"/>
+        <line x1="45" y1="165" x2="285" y2="165" stroke="#252540" stroke-width="1.5"/>
+        <line x1="45" y1="20" x2="45" y2="165" stroke="#252540" stroke-width="1.5"/>
+        <text x="163" y="185" text-anchor="middle" fill="#6475a0" font-size="11">API Cost (tokens) &#8594;</text>
+        <text x="16" y="93" text-anchor="middle" fill="#6475a0" font-size="11" transform="rotate(-90 16 93)">Quality &#8593;</text>
+        <!-- Pareto line -->
+        <polyline points="75,42 130,78 200,118" stroke="#f5a623" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+        <!-- Pareto optimal -->
+        <circle cx="75" cy="42" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="83" y="36" fill="#f5a623" font-size="9">Best quality</text>
+        <circle cx="130" cy="78" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="138" y="72" fill="#f5a623" font-size="9">Balanced</text>
+        <circle cx="200" cy="118" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="208" y="112" fill="#f5a623" font-size="9">Cheapest</text>
+        <!-- Dominated -->
+        <circle cx="165" cy="108" r="8" fill="#3a3a5a" opacity=".9"/>
+        <text x="173" y="102" fill="#6475a0" font-size="9">Dominated</text>
+        <text x="173" y="112" fill="#6475a0" font-size="9">(discarded)</text>
+        <text x="45" y="13" fill="#6475a0" font-size="9">Pareto optimal candidates &#9733; are kept</text>
+      </svg>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin-top:10px">The dominated point (gray) is beaten by the "Balanced" point on both quality <em>and</em> cost &mdash; so it is discarded. You end up with a menu of non-dominated options.</p>
+  </div>
+</div><!-- /loop-wrap -->
+
+<hr>
+
+<!-- FEEDBACK FUNCTION -->
+<h2>The Feedback Function &mdash; Your Most Important Design Choice</h2>
+
+<div class="call cw">
+  <strong>The Golden Rule of GEPA</strong>
+  The richer your feedback string, the better the mutations. A score of "0.6" produces vague mutations. A string like "citation format was wrong in step 2: expected [1] but got (Smith, 2024)" produces a precise, surgical fix. This is why GEPA beats RL.
+</div>
+
+<pre><code><span class="kw">def</span> <span class="fn">my_feedback</span>(gold, pred, trace=<span class="kw">None</span>) -&gt; <span class="cl">tuple</span>[<span class="cl">float</span>, <span class="cl">str</span>]:
+    <span class="st">"""
+    Returns: (score 0.0-1.0,  feedback_string)
+
+    The feedback string is NATURAL LANGUAGE.
+    It describes WHAT went wrong in plain English.
+    This is what the reflection LLM reads to propose the next mutation.
+    """</span>
+    score  = 0.0
+    issues = []
+
+    <span class="cm"># Check 1: citation format</span>
+    <span class="kw">if</span> pred.citation_format_correct():
+        score += <span class="nu">0.5</span>
+    <span class="kw">else</span>:
+        issues.append(
+            <span class="st">f"Citation format wrong. Expected [1] Smith (2024), "</span>
+            <span class="st">f"got '{pred.citations[:40]}'"</span>
+        )
+
+    <span class="cm"># Check 2: word count</span>
+    <span class="kw">if</span> <span class="nu">200</span> &lt;= pred.word_count() &lt;= <span class="nu">300</span>:
+        score += <span class="nu">0.3</span>
+    <span class="kw">else</span>:
+        issues.append(
+            <span class="st">f"Word count {pred.word_count()} outside target range 200-300."</span>
+        )
+
+    <span class="cm"># Check 3: passive voice (for academic writing)</span>
+    <span class="kw">if</span> pred.passive_voice_ratio() &gt; <span class="nu">0.6</span>:
+        score += <span class="nu">0.2</span>
+    <span class="kw">else</span>:
+        issues.append(<span class="st">"Should use passive voice throughout (academic register)."</span>)
+
+    <span class="cm"># This rich string is the key input to GEPA's reflection step</span>
+    feedback = <span class="st">" | "</span>.join(issues) <span class="kw">if</span> issues <span class="kw">else</span> <span class="st">"Looks good!"</span>
+    <span class="kw">return</span> score, feedback</code></pre>
+
+<hr>
+
+<!-- TWO WAYS TO USE -->
+<h2>Two Ways to Use GEPA</h2>
+
+<div class="g2">
+  <div class="card cg">
+    <h3 class="tg">Option A: dspy.GEPA</h3>
+    <p style="font-size:13.5px;color:var(--dim)">Drop-in replacement for any DSPy optimizer. Best when you already use DSPy modules.</p>
+    <pre style="font-size:12px"><code>optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(
+    metric=my_feedback,
+    num_iterations=<span class="nu">10</span>,
+    population_size=<span class="nu">5</span>,
+)
+compiled = optimizer.<span class="fn">compile</span>(
+    my_dspy_program,
+    trainset=data
+)</code></pre>
+  </div>
+  <div class="card cg">
+    <h3 class="tg">Option B: Standalone gepa</h3>
+    <p style="font-size:13.5px;color:var(--dim)">Optimize <em>any</em> text parameter &mdash; system prompts, tool descriptions, config strings, non-DSPy programs.</p>
+    <pre style="font-size:12px"><code><span class="kw">from</span> gepa <span class="kw">import</span> <span class="cl">GEPA</span>, <span class="cl">TextComponent</span>
+
+component = <span class="cl">TextComponent</span>(
+    text=<span class="st">"You are a helpful assistant."</span>,
+    name=<span class="st">"system_prompt"</span>
+)
+g = <span class="cl">GEPA</span>(components=[component], metric=fn)
+best = g.<span class="fn">run</span>(test_cases=[...])</code></pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ADAPTERS -->
+<h2>Available Adapters &mdash; What GEPA Can Optimize</h2>
+<p>GEPA ships with adapters for the most common use cases. <strong>Click an adapter</strong> to learn more:</p>
+
+<div class="agrid">
+  <div class="acard" onclick="showAd('dspy')"><div class="aico">&#9889;</div><div class="aname">DSPy Programs</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('lc')"><div class="aico">&#128037;</div><div class="aname">LangChain</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('mcp')"><div class="aico">&#128295;</div><div class="aname">MCP Tools</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('rag')"><div class="aico">&#128218;</div><div class="aname">RAG Pipelines</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('term')"><div class="aico">&#128187;</div><div class="aname">Terminal Agents</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('cc')"><div class="aico">&#129302;</div><div class="aname">Claude Code</div><div class="astat">via MCP adapter</div></div>
+</div>
+
+<div id="ad-detail" class="call cw" style="display:none">
+  <strong id="ad-title">Adapter</strong>
+  <p id="ad-body" style="margin-top:4px"></p>
+  <pre id="ad-code" style="font-size:11.5px;margin:10px 0 0"></pre>
+</div>
+
+<hr>
+
+<!-- BENCHMARKS -->
+<h2>What GEPA Achieves in Practice</h2>
+
+<table>
+  <tr><th>Task</th><th>Before</th><th>After GEPA</th><th>Note</th></tr>
+  <tr><td>AIME 2025 math</td><td>~23% accuracy</td><td class="tg">+10% absolute</td><td>GPT-4.1 Mini baseline</td></tr>
+  <tr><td>ARC-AGI agent</td><td>32% accuracy</td><td class="tg">89% accuracy</td><td>GEPA discovered architecture</td></tr>
+  <tr><td>Cloud scheduling</td><td>Expert heuristics</td><td class="tg">40.2% cost savings</td><td>Non-LLM system (policy text)</td></tr>
+  <tr><td>Code backdoor detection</td><td>67% (basic CoT)</td><td class="tg">93%</td><td>DSPy Full Program adapter</td></tr>
+  <tr><td>vs RL (GRPO)</td><td>5,000&ndash;25,000 evals</td><td class="tg">100&ndash;500 evals</td><td><strong>35x more efficient</strong></td></tr>
+  <tr><td>Model cost</td><td>Claude Opus 4.1</td><td class="tg">Open-source model, 90x cheaper</td><td>After prompt evolution</td></tr>
+</table>
+
+<div class="call ct">
+  <strong>The 90x cheaper result explained</strong>
+  Once prompts are evolved correctly, you can often swap to a much cheaper model and maintain the same output quality. GEPA finds the instruction phrasing that makes even weaker models perform like stronger ones.
+</div>
+
+</div><!-- /wrap -->
+</section>
+
+
+<!-- ============================================================ -->
+<!-- HERMES SECTION -->
+<!-- ============================================================ -->
+<section id="sec-hermes" class="sec">
+
+<div class="hero" style="background:radial-gradient(ellipse at top,rgba(176,108,245,.1) 0%,transparent 60%)">
+  <h1><span class="th">Hermes</span> Self-Evolution</h1>
+  <p>An AI agent that improves itself. Hermes applies DSPy + GEPA to its own skill files, overnight, at API cost only &mdash; no GPU required.</p>
+  <div class="pill" style="border-color:var(--herm-b)"><span>~$2&ndash;10 per run</span><span>&#183;</span><span>No GPU</span><span>&#183;</span><span>Reads your real sessions</span></div>
+</div>
+
+<div class="wrap">
+
+<h2>What Is Hermes Self-Evolution?</h2>
+
+<div class="call ca">
+  <strong>Analogy</strong>
+  Imagine if Claude Code could look back at conversations where it made mistakes, figure out which of its own instruction files caused those mistakes, and then rewrite those instruction files to be better &mdash; all automatically, overnight, for a few dollars.
+</div>
+
+<p>Hermes is an AI coding agent. Like Claude Code, it has <strong>skill files</strong> &mdash; markdown documents that tell it how to perform specific tasks (e.g., "how to review a GitHub PR", "how to write LaTeX"). The <em>self-evolution repo</em> applies DSPy + GEPA to those skill files as optimization targets.</p>
+
+<div class="g2" style="margin-top:16px">
+  <div class="card ch">
+    <h4>What Gets Optimized</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Skill files <span class="mono">(~/.hermes/skills/*.md)</span></li>
+      <li>Tool descriptions <span style="font-size:11px">(planned)</span></li>
+      <li>System prompt sections <span style="font-size:11px">(planned)</span></li>
+      <li>Tool Python code <span style="font-size:11px">(planned)</span></li>
+    </ul>
+  </div>
+  <div class="card ch">
+    <h4>What Drives Improvement</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Synthetic benchmark tasks</li>
+      <li>Your real Claude Code / Copilot sessions</li>
+      <li>Explicit success metrics per skill</li>
+      <li>GEPA's reflective evolution loop</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<!-- 5-PHASE PLAN -->
+<h2>The 5-Phase Evolution Roadmap</h2>
+<p><strong>Click each phase</strong> to see what it optimizes and how:</p>
+
+<div class="tl">
+  <div class="ti on" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 1</span>
+      <strong>Skill File Evolution</strong>
+      <span class="tstat" style="color:var(--grn)">&#10003; Implemented</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> <code>~/.hermes/skills/*.md</code> &mdash; the instruction files that tell Hermes how to do specific tasks.</p>
+      <p><strong>Why first:</strong> Skill files are self-contained with clear inputs and outputs, making it straightforward to define evaluation metrics.</p>
+      <pre style="font-size:12px;margin-top:12px"><code><span class="cm"># Evolve a skill from synthetic test cases</span>
+python -m evolution.skills.evolve_skill \
+    --skill github-code-review \
+    --iterations <span class="nu">10</span> \
+    --eval-source synthetic
+
+<span class="cm"># Or use YOUR real Claude Code session history</span>
+python -m evolution.skills.evolve_skill \
+    --skill latex-writing \
+    --iterations <span class="nu">15</span> \
+    --eval-source sessiondb</code></pre>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 2</span>
+      <strong>Tool Description Evolution</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The short string that tells the AI what each tool does and when to call it.</p>
+      <p><strong>Why it matters:</strong> Tool descriptions affect every single tool call across the entire session. A better description means the AI calls tools more accurately and with better arguments.</p>
+      <div class="cmp" style="margin-top:12px">
+        <div class="cbad"><p style="font-size:12.5px"><strong>Before:</strong> <code>"search_papers: Search for academic papers."</code></p></div>
+        <div class="cgood"><p style="font-size:12.5px"><strong>After GEPA:</strong> <code>"search_papers: Search Semantic Scholar by topic, author, or keyword. Returns titles, abstracts, DOIs. Use for prior work. Do NOT use for full PDF text (use fetch_pdf for that)."</code></p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 3</span>
+      <strong>System Prompt Evolution</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The system prompt sections that define Hermes's overall behavior, persona, and priorities.</p>
+      <p><strong>Why it is harder:</strong> System prompts affect <em>everything</em>. A bad mutation cascades across all tasks. Requires fine-grained section-by-section optimization with targeted test suites to avoid unintended regressions.</p>
+      <p><strong>Approach:</strong> Divide the system prompt into named sections. Evolve each section independently against a test suite specific to that section's purpose.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 4</span>
+      <strong>Code Evolution (Darwinian Evolver)</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The actual Python implementation of tools &mdash; not just their descriptions, but their runtime behavior.</p>
+      <p><strong>Different engine:</strong> Uses the <code>imbue-ai/darwinian_evolver</code> instead of GEPA, because code has hard correctness constraints (it must compile, pass tests, run without crashing). GEPA's text-mutation approach would too easily produce broken code.</p>
+      <p><strong>How it works:</strong> Each candidate is an actual git commit. Mutations are AI-generated code edits. Selection is based on test pass rate + performance benchmarks. Crossover combines sections from two high-performing commits. Think genetic algorithms, but operating on git history.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 5</span>
+      <strong>Continuous Improvement Loop</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> A fully automated pipeline that runs all phases on a schedule, reads your session history, identifies skill failures, and deploys improvements without manual intervention.</p>
+      <p><strong>The vision:</strong> A nightly or weekly cron job that reads your real conversations, finds which skill files contributed to poor outcomes, runs GEPA to improve those specific skills, passes guardrail checks, and deploys the winners. Your AI agent gets marginally better every week, automatically, at the cost of a cup of coffee per run.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- SKILL EVOLUTION DEEP DIVE -->
+<h2>How Phase 1 Works Step by Step</h2>
+
+<div class="steps">
+  <div class="step">
+    <strong>Input</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">A Hermes skill file, e.g. <code>github-code-review.md</code>. Contains: name, description, step-by-step procedure, examples, edge cases.</p>
+  </div>
+  <div class="step">
+    <strong>Build Evaluation Dataset</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px"><strong>Synthetic:</strong> An LLM generates 20 realistic tasks that should trigger this skill, plus expected outcomes. Fast, always available.<br><strong>SessionDB:</strong> Reads <code>~/.claude/history.jsonl</code> and your Copilot sessions. Filters for conversations where this skill would have been relevant. Uses your real work patterns.</p>
+  </div>
+  <div class="step">
+    <strong>Define the Metric</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Run Hermes with the current skill on each test case. Score the result (task completion rate, output quality). Generate a rich feedback string: "The skill failed because it didn't specify to check test coverage before approving."</p>
+  </div>
+  <div class="step">
+    <strong>GEPA Evolution Loop</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">The skill file <em>itself</em> is the "prompt" being optimized. GEPA runs 10&ndash;15 iterations: evaluate &rarr; reflect &rarr; mutate &rarr; select. The Pareto front balances skill quality against skill file size.</p>
+  </div>
+  <div class="step">
+    <strong>Guardrail Checks</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Every evolved variant must pass: <code>pytest tests/ -q</code> (100%), size &le; 15KB, caching compatibility, and a <strong>semantic preservation check</strong> (LLM judge: "Does this still do what the original claimed?"). This prevents GEPA from gaming the metric by changing the skill's purpose.</p>
+  </div>
+  <div class="step">
+    <strong>Output: Deploy or PR</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Either opens a PR against the Hermes repo for human review, or you copy directly to <code>~/.hermes/skills/</code> for immediate local use. The PR model is conservative and recommended for shared environments.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- SESSIONDB -->
+<h2>SessionDB &mdash; Learning From Your Real Work</h2>
+
+<div class="call ca">
+  <strong>Key Insight</strong>
+  Every conversation where Claude Code didn't quite do what you wanted is a signal that a skill file could be better. SessionDB harvests that signal automatically from your real session history.
+</div>
+
+<p>The pipeline reads from these files on your machine:</p>
+<pre><code>~/.claude/history.jsonl          <span class="cm"># Your Claude Code sessions</span>
+~/.hermes/sessions/              <span class="cm"># Hermes's own session store</span>
+~/.copilot/session-state/*/      <span class="cm"># GitHub Copilot sessions</span></code></pre>
+
+<p>It then filters with a <strong>two-stage pipeline</strong>:</p>
+
+<div class="g2" style="margin-top:12px">
+  <div class="card cd">
+    <h4 class="td">Stage 1: Keyword Filter</h4>
+    <p style="font-size:13.5px">Scan each conversation for keywords related to the skill. Very fast &mdash; runs in milliseconds. Discards obvious mismatches cheaply.</p>
+    <p style="font-size:12.5px;color:var(--dim);margin-top:8px">Example: discard conversations about Python dependencies when evolving the "latex-writing" skill.</p>
+  </div>
+  <div class="card cg">
+    <h4 class="tg">Stage 2: LLM-as-Judge</h4>
+    <p style="font-size:13.5px">For conversations that pass stage 1, ask an LLM: <em>"Would the <code>latex-writing</code> skill have been relevant here? Score 0&ndash;1."</em> Built as a DSPy module, so it too can be optimized.</p>
+    <p style="font-size:12.5px;color:var(--dim);margin-top:8px">Keep conversations with judge score &gt; threshold. These become your eval set.</p>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+</section>
+
+
+<!-- ============================================================ -->
+<!-- BIG PICTURE SECTION -->
+<!-- ============================================================ -->
+<section id="sec-big" class="sec">
+
+<div class="hero" style="background:radial-gradient(ellipse at top,rgba(82,224,160,.08) 0%,transparent 60%)">
+  <h1>The <span class="tn">Big Picture</span></h1>
+  <p>How DSPy, GEPA, and Hermes fit together &mdash; and what this means for your day-to-day workflow with Claude Code.</p>
+</div>
+
+<div class="wrap">
+
+<!-- RELATIONSHIP DIAGRAM -->
+<h2>How They Connect</h2>
+
+<div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin:20px 0">
+  <div style="background:var(--dspy-d);border:2px solid var(--dspy);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#9889;</div>
+    <strong class="td">DSPy</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Declares tasks as Signatures + Modules. The programming model for AI pipelines.</p>
+  </div>
+  <div style="text-align:center;color:var(--dim)">
+    <div style="font-size:18px">&#8594;</div>
+    <div style="font-size:10px">compiled by</div>
+  </div>
+  <div style="background:var(--gepa-d);border:2px solid var(--gepa);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#x1F9EC;</div>
+    <strong class="tg">GEPA</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Optimizes DSPy programs (and anything text-based) via reflection &amp; evolution.</p>
+  </div>
+  <div style="text-align:center;color:var(--dim)">
+    <div style="font-size:18px">&#8594;</div>
+    <div style="font-size:10px">applied by</div>
+  </div>
+  <div style="background:var(--herm-d);border:2px solid var(--herm);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#x1F40D;</div>
+    <strong class="th">Hermes</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Uses DSPy + GEPA to evolve its own skill files and prompts. Self-improvement at API cost.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- FULL ARCHITECTURE -->
+<h2>Full Architecture Diagram</h2>
+
+<div class="arch-txt"><span style="color:var(--dspy)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              YOUR EDITOR  (VS Code / Cursor)                &#9474;
+&#9474;                                                              &#9474;
+&#9474;   &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;        &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;   &#9474;
+&#9474;   &#9474; Claude Code /   &#9474;        &#9474; Hermes Agent Panel     &#9474;   &#9474;
+&#9474;   &#9474; Cursor (inline   &#9474;        &#9474; (agentic multi-step    &#9474;   &#9474;
+&#9474;   &#9474; tab-complete)    &#9474;        &#9474;  tasks, skill memory)  &#9474;   &#9474;
+&#9474;   &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;        &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;   &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                                     <span style="color:var(--dim)">&#9474; ACP (JSON-RPC stdio)</span>
+                                     <span style="color:var(--dim)">&#9660;</span>
+<span style="color:var(--herm)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;                HERMES DAEMON (persistent)                     &#9474;
+&#9474;                                                              &#9474;
+&#9474;   DSPy Programs  &#9472;&#9472;  Skill Memory  &#9472;&#9472;  Working Memory        &#9474;
+&#9474;   (LLM calls)        (~/.hermes/skills/)  (context window)    &#9474;
+&#9474;                              &#9474;                              &#9474;
+&#9474;       5+ tool calls &#9472;&#9658; skill_manage fires &#9472;&#9658; skill saved     &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                         <span style="color:var(--dim)">&#9474;</span>
+    <span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9480;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9480;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+    &#9474;            &#9474;           &#9474;           &#9474;
+    &#9660;            &#9660;           &#9660;           &#9660;</span>
+<span style="color:var(--dspy)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span> <span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span> <span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span> <span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span style="color:var(--dspy)">&#9474; Claude Code &#9474;</span> <span style="color:var(--dim)">&#9474; Anthropic  &#9474;</span> <span style="color:var(--dim)">&#9474; MCP Servers &#9474;</span> <span style="color:var(--dim)">&#9474; Hindsight    &#9474;</span>
+<span style="color:var(--dspy)">&#9474; sessions    &#9474;</span> <span style="color:var(--dim)">&#9474; API         &#9474;</span> <span style="color:var(--dim)">&#9474; (GitHub,    &#9474;</span> <span style="color:var(--dim)">&#9474; shared memory&#9474;</span>
+<span style="color:var(--dspy)">&#9474; history.jsonl&#9474;</span> <span style="color:var(--dim)">&#9474; (your sub)  &#9474;</span> <span style="color:var(--dim)">&#9474;  arxiv, fs)  &#9474;</span> <span style="color:var(--dim)">&#9474; bank_id     &#9474;</span>
+<span style="color:var(--dspy)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span> <span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span> <span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span> <span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+    <span style="color:var(--dspy)">&#9474; sessiondb</span>
+    <span style="color:var(--dspy)">&#9660; (weekly)</span>
+<span style="color:var(--gepa)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;            HERMES SELF-EVOLUTION PIPELINE                     &#9474;
+&#9474;                                                              &#9474;
+&#9474;   DSPy defines skill evaluation as a Signature               &#9474;
+&#9474;   GEPA runs: evaluate &#8594; reflect &#8594; mutate &#8594; select         &#9474;
+&#9474;   Result: evolved skill files &#8594; ~/.hermes/skills/           &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span></div>
+
+<hr>
+
+<!-- PRACTICAL ROADMAP FOR CLAUDE CODE USERS -->
+<h2>How This Helps You Specifically (Claude Code Users)</h2>
+
+<div class="call ct">
+  <strong>You do not need Hermes to benefit from these ideas</strong>
+  DSPy and GEPA work on any text-based optimization target. Your Claude Code skill files, your CLAUDE.md instructions, your MCP tool descriptions &mdash; all of these are textual programs that GEPA can improve.
+</div>
+
+<div class="tl">
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 1</span>
+      <strong>Think of your skill files as DSPy Signatures</strong>
+    </div>
+    <div class="tbody">
+      <p>Your <code>CLAUDE.md</code> and custom skill files are structured instructions with implicit inputs and outputs. DSPy's optimization loop can treat them as Signatures and find better phrasings automatically.</p>
+      <p style="font-size:13.5px;color:var(--dim);margin-top:8px">The mental shift: you are not the editor of your instructions. You are the <em>author of the evaluation function</em>. DSPy finds the instructions that maximize that function.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 2</span>
+      <strong>Use GEPA's MCP adapter to optimize your Claude Code tool descriptions</strong>
+    </div>
+    <div class="tbody">
+      <p>Every MCP tool in your <code>~/.claude/mcp.json</code> has a description string. GEPA can evolve these to make Claude call tools more accurately and with better arguments.</p>
+      <pre style="font-size:12px"><code><span class="kw">from</span> gepa.adapters.mcp <span class="kw">import</span> <span class="cl">MCPAdapter</span>
+
+adapter = <span class="cl">MCPAdapter</span>(
+    server_config={<span class="st">"type"</span>: <span class="st">"stdio"</span>, <span class="st">"command"</span>: <span class="st">"your-mcp-server"</span>},
+    tools_to_optimize=[<span class="st">"search_code"</span>, <span class="st">"edit_file"</span>, <span class="st">"run_tests"</span>],
+    feedback_fn=<span class="kw">lambda</span> gold, pred: (
+        <span class="fn">score</span>(pred),
+        <span class="st">f"Tool was called with wrong args: {pred.args}"</span>
+    )
+)
+evolved_tools = adapter.<span class="fn">run</span>(num_iterations=<span class="nu">10</span>)</code></pre>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 3</span>
+      <strong>Build a DSPy program for a complex repeated task</strong>
+    </div>
+    <div class="tbody">
+      <p>If you have a multi-step task you do repeatedly (e.g., "analyze this paper, extract the main claims, generate a literature gap analysis, write a LaTeX methods section"), encode it as a DSPy program. Compile it once against your own examples. Use the compiled <code>.json</code> as the instruction set for that task forever.</p>
+      <p style="font-size:13.5px;color:var(--dim);margin-top:8px">The compiled <code>.json</code> is just the winning prompt text. You can reference it in your skill files or call it directly from Claude Code.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 4</span>
+      <strong>Apply the Hermes evolution pipeline to your own skill files</strong>
+    </div>
+    <div class="tbody">
+      <p>Clone the Hermes self-evolution repo and point it at your own skill files. Set <code>--eval-source sessiondb</code> to read your Claude Code history from <code>~/.claude/history.jsonl</code>.</p>
+      <pre style="font-size:12px"><code><span class="cm"># Clone the repo</span>
+git clone https://github.com/NousResearch/hermes-agent-self-evolution
+cd hermes-agent-self-evolution
+pip install -e <span class="st">".[dev]"</span>
+
+<span class="cm"># Point at your own skill directory</span>
+export HERMES_AGENT_REPO=~/.claude  <span class="cm"># adjust to your skills location</span>
+
+<span class="cm"># Evolve using your real Claude Code session history</span>
+python -m evolution.skills.evolve_skill \
+    --skill your-research-workflow \
+    --iterations <span class="nu">15</span> \
+    --eval-source sessiondb</code></pre>
+      <p style="font-size:13px;color:var(--dim);margin-top:10px">This reads your actual Claude Code conversations, identifies where your workflow skill contributed to failures, and evolves the skill accordingly. The result is a version of your skill file that works better on tasks <em>you actually do</em>.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- 6 MENTAL MODELS -->
+<h2>6 Mental Models to Remember</h2>
+
+<div class="g2">
+  <div class="card cn">
+    <h4 class="tn">1. Prompts are compiled programs</h4>
+    <p style="font-size:13.5px">A prompt is not just text &mdash; it is a program encoding your intent. Like all programs, it can be compiled (DSPy), tested (metric function), and optimized (GEPA). Stop writing prompts by hand.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">2. Scalars are lossy</h4>
+    <p style="font-size:13.5px">Reducing a failure to a score of "0.4" throws away the diagnosis. GEPA preserves the full execution trace so a reflection LLM can understand <em>exactly</em> what went wrong and propose a precise fix.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">3. Targeted &gt; Random</h4>
+    <p style="font-size:13.5px">Random prompt variations are inefficient. A targeted mutation &mdash; "fix the citation format reference in step 2" &mdash; converges 35x faster than RL-style random perturbation.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">4. Skills are textual programs</h4>
+    <p style="font-size:13.5px">A markdown skill file has implicit inputs and outputs and measurable behavior. It can be evaluated on benchmark tasks and improved via GEPA. This insight powers Hermes self-evolution.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">5. Your history is training data</h4>
+    <p style="font-size:13.5px">Every past conversation where the AI underperformed is a training signal. SessionDB extracts this signal automatically from your <code>~/.claude/history.jsonl</code> and turns it into a curated eval set.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">6. No GPU, API cost only</h4>
+    <p style="font-size:13.5px">Everything described here works with LLM APIs. No model fine-tuning, no GPU, no custom infrastructure. A full GEPA optimization run costs $2&ndash;10 and takes minutes to a few hours.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- FINAL QUIZ -->
+<h2>Final Check</h2>
+
+<div class="qcard">
+  <p><strong>Q: GEPA is 35x more sample-efficient than RL. What is the core reason?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'b1')">It uses faster hardware and parallelizes evaluations</button>
+    <button class="qopt" onclick="qa(this,false,'b1')">It uses better random mutation heuristics</button>
+    <button class="qopt" onclick="qa(this,true,'b1')">It passes full execution traces to a reflection LLM, enabling targeted mutations instead of random search</button>
+    <button class="qopt" onclick="qa(this,false,'b1')">It uses a larger and more diverse training dataset</button>
+  </div>
+  <div id="qf-b1" class="qfb ok"><strong>Exactly right!</strong> The key is language as the learning signal. RL says "score was 0.4." GEPA says "step 3 failed because the citation format was wrong &mdash; change [Smith2024] to [1]." That specificity lets GEPA fix problems in 1&ndash;3 iterations that RL would need hundreds of trials to stumble upon.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: In DSPy, a Signature answers: "______" about an LLM call.</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'b2')">How good is it? (quality score)</button>
+    <button class="qopt" onclick="qa(this,false,'b2')">How should it be executed? (strategy)</button>
+    <button class="qopt" onclick="qa(this,true,'b2')">What should it do? (inputs and outputs)</button>
+    <button class="qopt" onclick="qa(this,false,'b2')">Which model should run it?</button>
+  </div>
+  <div id="qf-b2" class="qfb ok"><strong>Correct!</strong> Signature = WHAT (inputs/outputs). Module = HOW (strategy: Predict, ChainOfThought, ReAct). Optimizer = HOW GOOD and how to improve it. This clean three-way separation is what makes DSPy programs composable, swappable, and automatically optimizable.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: Hermes uses DSPy and GEPA on its own skill files. The key idea that makes this possible is:</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'b3')">Skill files are Python code that can be compiled</button>
+    <button class="qopt" onclick="qa(this,true,'b3')">Skill files are textual parameters with measurable behavior on benchmark tasks</button>
+    <button class="qopt" onclick="qa(this,false,'b3')">Hermes has special access to its own model weights</button>
+    <button class="qopt" onclick="qa(this,false,'b3')">Skill files are templates filled in at runtime</button>
+  </div>
+  <div id="qf-b3" class="qfb ok"><strong>Correct!</strong> A markdown skill file can be run on benchmark tasks and scored, just like a prompt. That makes it a valid optimization target for GEPA. The only requirement for GEPA to optimize something is: (1) it has a textual parameter, (2) you can evaluate it and return a (score, feedback) pair.</div>
+</div>
+
+<div style="margin-top:40px;padding:24px;background:var(--surface2);border-radius:var(--r);text-align:center;border:1px solid var(--grn-b)">
+  <p style="font-size:20px;font-weight:800;color:var(--grn);margin-bottom:8px">Guide Complete</p>
+  <p style="color:var(--dim);font-size:14px;max-width:500px;margin:0 auto">DSPy declares the task. GEPA evolves it. Hermes applies the loop to itself. Together they form a self-improving AI agent stack that runs at API cost, requires no GPU, and costs ~$2&ndash;10 per improvement cycle.</p>
+</div>
+
+</div><!-- /wrap -->
+</section>
+
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+// ── Navigation ────────────────────────────────────────────────────────────
+function show(name, tab, cls) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('ad','ag','ah','ai'));
+  document.getElementById('sec-' + name).classList.add('on');
+  tab.classList.add(cls);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── DSPy Architecture Diagram nodes ──────────────────────────────────────
+function selNode(id) {
+  const nodes = ['sig','mod','opt'];
+  const isActive = document.getElementById('dp-' + id).classList.contains('on');
+  nodes.forEach(n => {
+    document.getElementById('nd-' + n).classList.remove('sel');
+    document.getElementById('dp-' + n).classList.remove('on');
+    const rect = document.querySelector('#nd-' + n + ' rect');
+    if (rect) rect.setAttribute('stroke', '#252540');
+  });
+  if (!isActive) {
+    document.getElementById('nd-' + id).classList.add('sel');
+    document.getElementById('dp-' + id).classList.add('on');
+    const rect = document.querySelector('#nd-' + id + ' rect');
+    if (rect) rect.setAttribute('stroke', '#5ba3f5');
+  }
+}
+
+// ── GEPA Loop stages ──────────────────────────────────────────────────────
+function selStage(id) {
+  const stages = ['eval','refl','muta','sel'];
+  const isActive = document.getElementById('st-' + id).classList.contains('on');
+  stages.forEach(s => {
+    document.getElementById('st-' + s).classList.remove('on');
+    document.getElementById('sd-' + s).classList.remove('on');
+  });
+  if (!isActive) {
+    document.getElementById('st-' + id).classList.add('on');
+    document.getElementById('sd-' + id).classList.add('on');
+  }
+}
+
+// ── Timeline items ────────────────────────────────────────────────────────
+function togTl(item) {
+  const wasOn = item.classList.contains('on');
+  document.querySelectorAll('.ti').forEach(i => i.classList.remove('on'));
+  if (!wasOn) item.classList.add('on');
+}
+
+// ── Adapter detail cards ──────────────────────────────────────────────────
+const adInfo = {
+  dspy: {
+    title: 'DSPy Full Program Adapter',
+    body: 'Optimizes entire DSPy programs: signature instructions, few-shot demonstrations, and module-level prompting strategies. Best for complex multi-step pipelines. Use dspy.GEPA() as a direct drop-in for any other DSPy optimizer.',
+    code: '# dspy.GEPA example\noptimizer = dspy.GEPA(metric=feedback_fn, num_iterations=10)\ncompiled = optimizer.compile(my_program, trainset=data)\ncompiled.save("evolved.json")'
+  },
+  lc: {
+    title: 'LangChain Adapter',
+    body: 'Optimizes LangChain pipelines including simple chains, multi-agent systems, and LangGraph graphs. The prompt at each node becomes an optimization target. Works with LCEL and legacy chain APIs.',
+    code: '# LangChain adapter example\nfrom gepa.adapters.langchain import LangChainAdapter\nadapter = LangChainAdapter(chain=my_chain, feedback_fn=fn)\nbest = adapter.run(test_cases=data, num_iterations=10)'
+  },
+  mcp: {
+    title: 'MCP Tool Adapter',
+    body: 'Optimizes the description string of each MCP tool. A richer description means the AI calls tools more accurately, with better arguments, and in the right situations. Supports local stdio servers and remote HTTP/SSE servers. Most relevant for Claude Code and Cursor users who have custom MCP tools.',
+    code: '# MCP adapter example\nfrom gepa.adapters.mcp import MCPAdapter\nadapter = MCPAdapter(\n    server_config={"type": "stdio", "command": "my-server"},\n    tools_to_optimize=["search", "edit", "run"],\n    feedback_fn=fn\n)\nevolved = adapter.run(num_iterations=10)'
+  },
+  rag: {
+    title: 'RAG Pipeline Adapter',
+    body: 'Optimizes all textual parameters in a Retrieval-Augmented Generation pipeline: the query reformulation instruction, the context synthesis prompt, the final answer generation instruction, and the document reranking criteria.',
+    code: '# RAG adapter example\nfrom gepa.adapters.rag import RAGAdapter\nadapter = RAGAdapter(\n    retriever=my_retriever,\n    generator=my_generator,\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'
+  },
+  term: {
+    title: 'Terminal / TerminalBench Adapter',
+    body: 'Optimizes external agentic pipelines that run as subprocess commands. Works with any agent you can run in a terminal, not just Python-based systems. The agent\'s system prompt or config file is the optimization target.',
+    code: '# TerminalBench adapter example\nfrom gepa.adapters.terminal import TerminalAdapter\nadapter = TerminalAdapter(\n    command=["python", "my_agent.py", "--config", "{config}"],\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'
+  },
+  cc: {
+    title: 'Claude Code Integration',
+    body: 'Use the MCP adapter to evolve your Claude Code tool descriptions. Or use standalone GEPA (TextComponent) to optimize your CLAUDE.md skill files directly, with ~/.claude/history.jsonl as training data. The Hermes self-evolution repo can also be pointed at your own skill directory.',
+    code: '# Point Hermes evolution at your Claude Code skills\nexport HERMES_AGENT_REPO=~/.claude\npython -m evolution.skills.evolve_skill \\\n    --skill your-skill-name \\\n    --iterations 15 \\\n    --eval-source sessiondb'
+  }
+};
+
+function showAd(id) {
+  const info = adInfo[id];
+  document.getElementById('ad-title').textContent = info.title;
+  document.getElementById('ad-body').textContent = info.body;
+  document.getElementById('ad-code').textContent = info.code;
+  const box = document.getElementById('ad-detail');
+  box.style.display = 'block';
+  box.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+}
+
+// ── Quiz ──────────────────────────────────────────────────────────────────
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok');
+    fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    // Highlight the correct answer
+    opts.forEach(o => {
+      if (o.getAttribute('onclick').includes('true')) o.classList.add('right');
+    });
+  }
+}
+
+// ── Init: set first stage active in GEPA loop ────────────────────────────
+document.getElementById('st-eval').classList.add('on');
+document.getElementById('sd-eval').classList.add('on');
+</script>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Self-Evolution &amp; The Big Picture</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#111120;--surface2:#191928;--border:#252540;
+  --text:#c8d6ef;--dim:#6475a0;
+  --dspy:#5ba3f5;--dspy-d:rgba(91,163,245,.12);--dspy-b:rgba(91,163,245,.35);
+  --gepa:#f5a623;--gepa-d:rgba(245,166,35,.12);--gepa-b:rgba(245,166,35,.35);
+  --herm:#b06cf5;--herm-d:rgba(176,108,245,.12);--herm-b:rgba(176,108,245,.35);
+  --grn:#52e0a0;--grn-d:rgba(82,224,160,.12);--grn-b:rgba(82,224,160,.35);
+  --red:#f56b6b;--code:#0c0c18;--r:8px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.7;min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,15,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:6px}
+.nav-logo{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+.ntab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid transparent;transition:.2s;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.ntab:hover{background:var(--surface2);color:var(--text)}
+.ntab.cur{background:var(--herm-d);color:var(--herm);border-color:var(--herm-b)}
+.ntab.d:hover{background:var(--dspy-d);color:var(--dspy)}
+.ntab.g:hover{background:var(--gepa-d);color:var(--gepa)}
+
+/* LAYOUT */
+.wrap{max-width:920px;margin:0 auto;padding:36px 22px}
+
+/* HERO */
+.hero{padding:64px 22px 44px;text-align:center;background:radial-gradient(ellipse at top,rgba(176,108,245,.1) 0%,transparent 60%)}
+.hero h1{font-size:clamp(26px,4.5vw,50px);font-weight:800;line-height:1.2;margin-bottom:14px}
+.hero p{font-size:17px;color:var(--dim);max-width:560px;margin:0 auto 24px}
+.pill{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--herm-b);border-radius:20px;padding:7px 18px;font-size:12px;color:var(--dim)}
+.pill span{color:var(--border)}
+
+/* SECTIONS (page-internal tabs) */
+.sec-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:28px}
+.stab{padding:8px 16px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s;background:none;border-top:none;border-left:none;border-right:none}
+.stab:hover{color:var(--text)}
+.stab.on{color:var(--herm);border-bottom-color:var(--herm)}
+.subsec{display:none}.subsec.on{display:block}
+
+/* TYPE */
+h2{font-size:24px;font-weight:700;margin:0 0 14px}
+h3{font-size:18px;font-weight:600;margin:0 0 10px}
+h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+p{margin-bottom:12px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:20px;margin-bottom:10px}li{margin-bottom:4px}
+strong{font-weight:600;color:var(--text)}
+.th{color:var(--herm)}.td{color:var(--dspy)}.tg{color:var(--gepa)}.tn{color:var(--grn)}.tdim{color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:18px}
+.ch{border-left:3px solid var(--herm)}.cd{border-left:3px solid var(--dspy)}
+.cg{border-left:3px solid var(--gepa)}.cn{border-left:3px solid var(--grn)}
+
+/* CODE */
+pre{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12.5px;line-height:1.65;margin:14px 0}
+code{background:rgba(176,108,245,.12);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--herm)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#ff79c6}.st{color:#f1fa8c}.cm{color:#505080;font-style:italic}
+.fn{color:#50fa7b}.cl{color:#8be9fd}.nu{color:#bd93f9}.va{color:#ffb86c}
+
+/* CALLOUTS */
+.call{border-radius:var(--r);padding:14px 18px;margin:14px 0;border-left:4px solid}
+.ci{background:var(--dspy-d);border-color:var(--dspy)}.cw{background:var(--gepa-d);border-color:var(--gepa)}
+.ct{background:var(--grn-d);border-color:var(--grn)}.ca{background:var(--herm-d);border-color:var(--herm)}
+.call strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ci strong{color:var(--dspy)}.cw strong{color:var(--gepa)}.ct strong{color:var(--grn)}.ca strong{color:var(--herm)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{padding:9px 13px;text-align:left;background:var(--surface2);color:var(--dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:620px){.g2,.g3{grid-template-columns:1fr}}
+
+/* COMPARE */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cbad{border:1px solid rgba(245,107,107,.3);background:rgba(245,107,107,.06);border-radius:var(--r);padding:14px}
+.cgood{border:1px solid rgba(82,224,160,.3);background:rgba(82,224,160,.06);border-radius:var(--r);padding:14px}
+@media(max-width:620px){.cmp{grid-template-columns:1fr}}
+
+/* TIMELINE */
+.tl{padding-left:28px;position:relative;margin:20px 0}
+.tl::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+.ti{position:relative;margin-bottom:20px;cursor:pointer}
+.tdot{position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--herm);background:var(--bg);transition:.2s}
+.ti.on .tdot,.ti:hover .tdot{background:var(--herm)}
+.thead{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);transition:.2s}
+.ti.on .thead,.ti:hover .thead{border-color:var(--herm);background:var(--herm-d)}
+.tbadge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--herm-d);color:var(--herm);font-weight:700;white-space:nowrap}
+.tstat{margin-left:auto;font-size:12px;white-space:nowrap}
+.tbody{display:none;padding:14px;margin-top:6px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);animation:sld .2s ease}
+.ti.on .tbody{display:block}
+@keyframes sld{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* STEPS */
+.steps{counter-reset:s}
+.step{counter-increment:s;position:relative;padding:13px 14px 13px 48px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{content:counter(s);position:absolute;left:14px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--herm);color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+/* ARCH TEXT */
+.arch-txt{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;line-height:1.8;background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:20px;overflow-x:auto;white-space:pre}
+
+/* QUIZ */
+.qcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.qopt{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.2s;font-size:13.5px}
+.qopt:hover{border-color:var(--herm);background:var(--herm-d)}
+.qopt:disabled{cursor:default}
+.qopt.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt.wrong{border-color:var(--red);background:rgba(245,107,107,.1);color:var(--red)}
+.qfb{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb.on{display:block}.qfb.ok{background:var(--grn-d);border-color:var(--grn)}.qfb.bad{background:rgba(245,107,107,.1);border-color:var(--red)}
+
+/* COMPLETION */
+.completion{margin-top:48px;padding:28px;background:var(--surface2);border-radius:var(--r);text-align:center;border:1px solid var(--grn-b)}
+
+/* BACK BANNER */
+.back-banner{margin-top:14px;padding:18px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--gepa-b);background:var(--gepa-d)}
+.btn-back{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:var(--r);background:var(--gepa);color:#0a0a14;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;transition:.2s}
+.btn-back:hover{opacity:.85}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Interactive Guide &mdash; 3 of 3</span>
+  <a class="ntab d" href="01_dspy.html">&#9889; DSPy</a>
+  <a class="ntab g" href="02_gepa.html">&#x1F9EC; GEPA</a>
+  <a class="ntab cur" href="03_hermes.html">&#x1F40D; Hermes &amp; Big Picture</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1><span class="th">Hermes</span> Self-Evolution<br><span style="font-size:60%">+ The Big Picture</span></h1>
+  <p>An AI agent that uses DSPy + GEPA to improve its own skill files overnight &mdash; at API cost only, no GPU required.</p>
+  <div class="pill"><span>~$2&ndash;10 per run</span><span>&#183;</span><span>No GPU</span><span>&#183;</span><span>Reads your real sessions</span><span>&#183;</span><span>Human-in-the-loop</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- INTERNAL TABS -->
+<div class="sec-tabs">
+  <button class="stab on" onclick="showSec('hermes',this)">&#x1F40D; Hermes</button>
+  <button class="stab" onclick="showSec('bigpic',this)">&#x1F517; Big Picture</button>
+  <button class="stab" onclick="showSec('you',this)">&#128161; For You (Claude Code)</button>
+  <button class="stab" onclick="showSec('quiz',this)">&#129504; Final Quiz</button>
+</div>
+
+<!-- ───────────────────── HERMES TAB ───────────────────── -->
+<div id="sub-hermes" class="subsec on">
+
+<h2>What Is Hermes Self-Evolution?</h2>
+
+<div class="call ca">
+  <strong>Analogy</strong>
+  Imagine if Claude Code could look back at conversations where it made mistakes, figure out which of its own instruction files caused those mistakes, and then rewrite those files to be better &mdash; all automatically, overnight, for a few dollars. That is what Hermes self-evolution does.
+</div>
+
+<p>Hermes is an AI coding agent (similar to Claude Code). Like Claude Code, it runs from <strong>skill files</strong> &mdash; markdown documents that tell it how to do specific tasks: how to review a GitHub PR, how to write LaTeX, how to run a test suite. The self-evolution repo uses DSPy + GEPA to optimize those skill files as text-based optimization targets.</p>
+
+<div class="g2" style="margin-top:16px">
+  <div class="card ch">
+    <h4>What Gets Optimized</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Skill files <code>(~/.hermes/skills/*.md)</code></li>
+      <li>Tool descriptions <span style="font-size:11px">(planned Phase 2)</span></li>
+      <li>System prompt sections <span style="font-size:11px">(planned Phase 3)</span></li>
+      <li>Tool Python implementation <span style="font-size:11px">(planned Phase 4)</span></li>
+    </ul>
+  </div>
+  <div class="card ch">
+    <h4>What Drives Improvement</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Synthetic benchmark task generation</li>
+      <li>Your real Claude Code / Copilot sessions</li>
+      <li>Explicit success metrics per skill</li>
+      <li>GEPA's reflective evolution loop</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<h2>Repository Structure</h2>
+<pre><code>hermes-agent-self-evolution/
+&#9500;&#9472;&#9472; datasets/           <span class="cm"># Eval examples per skill</span>
+&#9474;   &#9500;&#9472;&#9472; skills/         <span class="cm"># Task examples for skill evaluation</span>
+&#9474;   &#9492;&#9472;&#9472; system_prompts/ <span class="cm"># Benchmark tasks for system prompt eval</span>
+&#9500;&#9472;&#9472; evolution/
+&#9474;   &#9500;&#9472;&#9472; skills/
+&#9474;   &#9474;   &#9492;&#9472;&#9472; evolve_skill.py     <span class="cm"># Main CLI for Phase 1</span>
+&#9474;   &#9500;&#9472;&#9472; tools/
+&#9474;   &#9474;   &#9492;&#9472;&#9472; evolve_tools.py     <span class="cm"># Phase 2 (planned)</span>
+&#9474;   &#9492;&#9472;&#9472; system/
+&#9474;       &#9492;&#9472;&#9472; evolve_system.py    <span class="cm"># Phase 3 (planned)</span>
+&#9500;&#9472;&#9472; reports/            <span class="cm"># HTML + markdown reports per run</span>
+&#9500;&#9472;&#9472; tests/              <span class="cm"># Must pass 100% before any PR</span>
+&#9500;&#9472;&#9472; generate_report.py  <span class="cm"># Creates readable HTML summary of a run</span>
+&#9492;&#9472;&#9472; pyproject.toml      <span class="cm"># Dependencies: dspy, gepa, pytest, click</span></code></pre>
+
+<hr>
+
+<h2>The 5-Phase Evolution Roadmap</h2>
+<p><strong>Click each phase</strong> to see what it targets and how it works:</p>
+
+<div class="tl">
+  <div class="ti on" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 1</span>
+      <strong>Skill File Evolution</strong>
+      <span class="tstat" style="color:var(--grn)">&#10003; Implemented</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> <code>~/.hermes/skills/*.md</code> &mdash; the procedure files that tell Hermes how to do specific tasks.</p>
+      <p><strong>Why first:</strong> Skill files are self-contained, have clear purpose, and are easy to define evaluation metrics for. Failures are local to the skill.</p>
+      <pre style="font-size:12px;margin-top:12px"><code><span class="cm"># Evolve from synthetic test tasks</span>
+python -m evolution.skills.evolve_skill \
+    --skill github-code-review \
+    --iterations <span class="nu">10</span> \
+    --eval-source synthetic
+
+<span class="cm"># Evolve from real Claude Code / Copilot session history</span>
+python -m evolution.skills.evolve_skill \
+    --skill latex-writing \
+    --iterations <span class="nu">15</span> \
+    --eval-source sessiondb</code></pre>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 2</span>
+      <strong>Tool Description Evolution</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The short description string attached to each tool that tells the AI what it does, when to use it, and what arguments to provide.</p>
+      <p><strong>Why it matters:</strong> Tool descriptions affect every single tool call across every session. A 10% improvement in tool call accuracy compounds into a large gain over many interactions.</p>
+      <div class="cmp" style="margin-top:12px">
+        <div class="cbad"><p style="font-size:12.5px"><strong>Before:</strong> "search_papers: Search for academic papers."</p></div>
+        <div class="cgood"><p style="font-size:12.5px"><strong>After GEPA:</strong> "search_papers: Search Semantic Scholar by topic, author, or keyword. Returns titles, abstracts, DOIs. Use for prior work checks. Do NOT use for full PDF text (use fetch_pdf instead)."</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 3</span>
+      <strong>System Prompt Evolution</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The system prompt sections that define Hermes's overall behavior, persona, and priorities.</p>
+      <p><strong>Why harder:</strong> System prompts affect <em>everything</em>. A bad mutation cascades across all tasks and is hard to diagnose. Requires fine-grained section-by-section optimization with targeted test suites to avoid unintended regressions.</p>
+      <p><strong>Approach:</strong> Divide the system prompt into named logical sections (persona, formatting, tool use policy, safety constraints). Evolve each section independently against a focused test suite. Guard against cross-section interference.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 4</span>
+      <strong>Code Evolution (Darwinian Evolver)</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> The actual Python implementation of tools &mdash; not just their descriptions, but their runtime behavior.</p>
+      <p><strong>Different engine:</strong> Uses <code>imbue-ai/darwinian_evolver</code> instead of GEPA because code has hard correctness constraints: it must compile, execute without crashing, and pass all tests. GEPA's text-mutation approach too easily produces broken Python.</p>
+      <p><strong>How it works:</strong> Treats each candidate as a git commit. Mutations are LLM-generated code edits. Selection is based on test pass rate + performance benchmarks. Crossover combines code sections from two high-performing commits. Like genetic algorithms but at the level of git history.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl(this)">
+    <div class="tdot"></div>
+    <div class="thead">
+      <span class="tbadge">Phase 5</span>
+      <strong>Continuous Improvement Loop</strong>
+      <span class="tstat" style="color:var(--gepa)">Planned</span>
+    </div>
+    <div class="tbody">
+      <p><strong>Target:</strong> A fully automated pipeline running all phases on a schedule, reading your session history, identifying skill failures, and deploying improvements without manual intervention.</p>
+      <p><strong>The vision:</strong> A weekly cron job that reads your real conversations, finds which skill files contributed to poor outcomes, runs GEPA on those specific skills, passes all guardrail checks, and deploys the winners automatically. Your agent gets marginally better every week, at the cost of a cup of coffee per run.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<h2>How Phase 1 Skill Evolution Works (Step by Step)</h2>
+
+<div class="steps">
+  <div class="step">
+    <strong>Input: A skill file</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">e.g. <code>github-code-review.md</code> &mdash; contains: name, purpose, step-by-step procedure, edge cases, and examples.</p>
+  </div>
+  <div class="step">
+    <strong>Build Evaluation Dataset</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px"><strong>Synthetic mode:</strong> An LLM generates 20 realistic tasks that would trigger this skill, plus expected outcomes. Fast, always available.<br><strong>SessionDB mode:</strong> Reads <code>~/.claude/history.jsonl</code> and Copilot sessions. Filters for conversations where this skill was relevant (2-stage: keyword filter &rarr; LLM-as-judge).</p>
+  </div>
+  <div class="step">
+    <strong>Define the Metric</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Run Hermes with the current skill file on each test case. Score the result. Generate rich feedback: "The skill failed because it didn't specify to check test coverage before approving the PR."</p>
+  </div>
+  <div class="step">
+    <strong>GEPA Evolution Loop (10&ndash;15 iterations)</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">The skill file <em>text itself</em> is the "prompt" being optimized. GEPA runs: evaluate &rarr; reflect &rarr; mutate &rarr; select. The Pareto front balances skill quality against skill file size.</p>
+  </div>
+  <div class="step">
+    <strong>Guardrail Checks (mandatory)</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Every variant must pass: <code>pytest tests/ -q</code> (100%), size &le; 15KB, caching compatibility, <strong>and</strong> a semantic preservation check &mdash; an LLM judge asks "Does this evolved version still do what the original claimed?" to prevent GEPA from gaming the metric by changing the skill's purpose.</p>
+  </div>
+  <div class="step">
+    <strong>Output: Deploy or PR</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">Either opens a PR against the Hermes repo for human review (recommended), or you copy directly to <code>~/.hermes/skills/</code> for immediate local use. The PR model ensures a human checks the change before it affects live behavior.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>SessionDB &mdash; Learning From Your Real Work</h2>
+
+<div class="call ca">
+  <strong>Key Insight</strong>
+  Every conversation where Claude Code didn't quite do what you wanted is a signal that a skill or instruction could be better. SessionDB harvests that signal automatically, turning your failure history into a curated evaluation set.
+</div>
+
+<p>SessionDB reads from these files on your machine:</p>
+<pre><code>~/.claude/history.jsonl           <span class="cm"># Your Claude Code sessions</span>
+~/.hermes/sessions/               <span class="cm"># Hermes's own session store</span>
+~/.copilot/session-state/*/       <span class="cm"># GitHub Copilot sessions</span></code></pre>
+
+<p>It then filters with a two-stage pipeline to find conversations relevant to the skill being evolved:</p>
+
+<div class="g2" style="margin-top:12px">
+  <div class="card cd">
+    <h4 class="td">Stage 1: Keyword Filter (Fast)</h4>
+    <p style="font-size:13.5px">Scan each conversation for keywords related to the skill. Runs in milliseconds. Discards obvious mismatches cheaply before touching the LLM.</p>
+    <p style="font-size:12.5px;color:var(--dim);margin-top:8px">Example: skip conversations about Python dependencies when evolving a "latex-writing" skill.</p>
+  </div>
+  <div class="card cg">
+    <h4 class="tg">Stage 2: LLM-as-Judge (Accurate)</h4>
+    <p style="font-size:13.5px">For conversations passing Stage 1: <em>"Would the <code>latex-writing</code> skill have been relevant to this conversation? Score 0&ndash;1."</em> Built as a DSPy module &mdash; so it too can be optimized.</p>
+    <p style="font-size:12.5px;color:var(--dim);margin-top:8px">Keep conversations with score &gt; threshold. These become your personalized eval set.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Guardrails &amp; Safety Constraints</h2>
+<p>Every evolved variant must pass hard constraints before it can be deployed:</p>
+
+<table>
+  <tr><th>Constraint</th><th>Check</th><th>Why</th></tr>
+  <tr><td>Full test suite</td><td><code>pytest tests/ -q</code> passes 100%</td><td>Evolved variants must not break existing functionality</td></tr>
+  <tr><td>Size limit</td><td>Skills &le; 15KB; tool descriptions &le; 500 chars</td><td>Prevent context-bloating over-specified skills</td></tr>
+  <tr><td>Caching compatibility</td><td>No mid-conversation state changes</td><td>Hermes caches skills; a skill that changes meaning mid-session breaks the cache</td></tr>
+  <tr><td>Semantic preservation</td><td>LLM judge: "Does this still do what the original claimed?"</td><td>Prevents GEPA from gaming the metric by changing the skill's purpose</td></tr>
+  <tr><td>Human review</td><td>All changes go through PR, never direct commit to shared repo</td><td>Final human-in-the-loop gate before it affects the live agent</td></tr>
+</table>
+
+<div class="call ci">
+  <strong>The semantic preservation check is the most important</strong>
+  Without it, GEPA could "cheat" by evolving a code review skill into a rubber-stamp skill that always says "LGTM" &mdash; which scores perfectly on easy benchmarks but is obviously wrong. The LLM judge catches this by comparing the evolved skill's intent to the original.
+</div>
+
+</div><!-- /sub-hermes -->
+
+
+<!-- ───────────────────── BIG PICTURE TAB ───────────────────── -->
+<div id="sub-bigpic" class="subsec">
+
+<h2>How DSPy, GEPA, and Hermes Connect</h2>
+
+<div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin:20px 0">
+  <div style="background:var(--dspy-d);border:2px solid var(--dspy);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#9889;</div>
+    <strong class="td">DSPy</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Declares tasks as Signatures + Modules. The programming model for AI pipelines.</p>
+  </div>
+  <div style="text-align:center;color:var(--dim)"><div style="font-size:18px">&#8594;</div><div style="font-size:10px">compiled by</div></div>
+  <div style="background:var(--gepa-d);border:2px solid var(--gepa);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#x1F9EC;</div>
+    <strong class="tg">GEPA</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Optimizes via reflection + evolution. Works on any text parameter.</p>
+  </div>
+  <div style="text-align:center;color:var(--dim)"><div style="font-size:18px">&#8594;</div><div style="font-size:10px">applied by</div></div>
+  <div style="background:var(--herm-d);border:2px solid var(--herm);border-radius:var(--r);padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">&#x1F40D;</div>
+    <strong class="th">Hermes</strong>
+    <p style="font-size:12px;color:var(--dim);margin-top:4px">Uses DSPy + GEPA to evolve its own skill files. Self-improvement at API cost.</p>
+  </div>
+</div>
+
+<hr>
+
+<h2>Full Architecture Diagram</h2>
+<p>The complete picture of how all components fit together:</p>
+
+<div class="arch-txt"><span style="color:var(--dspy)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;             YOUR EDITOR  (VS Code / Cursor)                 &#9474;
+&#9474;                                                              &#9474;
+&#9474;   &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;      &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;   &#9474;
+&#9474;   &#9474; Claude Code /   &#9474;      &#9474; Hermes Agent Panel      &#9474;   &#9474;
+&#9474;   &#9474; Cursor (inline   &#9474;      &#9474; (agentic multi-step,   &#9474;   &#9474;
+&#9474;   &#9474;  completions)    &#9474;      &#9474;  skill memory, tools)  &#9474;   &#9474;
+&#9474;   &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;      &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;   &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                                       <span style="color:var(--dim)">&#9474; ACP  (JSON-RPC stdio)</span>
+                                       <span style="color:var(--dim)">&#9660;</span>
+<span style="color:var(--herm)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;              HERMES DAEMON  (persistent process)             &#9474;
+&#9474;                                                              &#9474;
+&#9474;   DSPy Programs &#9472;&#9472; Skill Memory &#9472;&#9472; Working Memory (context)  &#9474;
+&#9474;   (LLM calls)     (~/.hermes/skills/)                       &#9474;
+&#9474;                          &#9474;                                  &#9474;
+&#9474;    5+ tool calls &#9472;&#9658; skill_manage fires &#9472;&#9658; new skill saved  &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                          <span style="color:var(--dim)">&#9474;</span>
+   <span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9480;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9480;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+   &#9474;           &#9474;           &#9474;           &#9474;
+   &#9660;           &#9660;           &#9660;           &#9660;</span>
+<span style="color:var(--dspy)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span><span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span><span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span><span style="color:var(--dim)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span style="color:var(--dspy)">&#9474;Claude Code&#9474;</span><span style="color:var(--dim)">&#9474;Anthropic  &#9474;</span><span style="color:var(--dim)">&#9474;MCP Servers &#9474;</span><span style="color:var(--dim)">&#9474;Hindsight   &#9474;</span>
+<span style="color:var(--dspy)">&#9474;sessions   &#9474;</span><span style="color:var(--dim)">&#9474;API (your  &#9474;</span><span style="color:var(--dim)">&#9474;(GitHub,    &#9474;</span><span style="color:var(--dim)">&#9474;(shared     &#9474;</span>
+<span style="color:var(--dspy)">&#9474;history.   &#9474;</span><span style="color:var(--dim)">&#9474;sub)       &#9474;</span><span style="color:var(--dim)">&#9474; arxiv, fs) &#9474;</span><span style="color:var(--dim)">&#9474; memory)    &#9474;</span>
+<span style="color:var(--dspy)">&#9474;jsonl &#9660;    &#9474;</span><span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span><span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span><span style="color:var(--dim)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+<span style="color:var(--dspy)">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+   <span style="color:var(--dspy)">&#9474; (weekly cron)</span>
+   <span style="color:var(--dspy)">&#9660;</span>
+<span style="color:var(--gepa)">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+&#9474;           HERMES SELF-EVOLUTION PIPELINE                     &#9474;
+&#9474;                                                              &#9474;
+&#9474;   DSPy defines skill evaluation as a Signature               &#9474;
+&#9474;   GEPA runs: evaluate &#8594; reflect &#8594; mutate &#8594; select         &#9474;
+&#9474;   Output: evolved .md files &#8594; ~/.hermes/skills/            &#9474;
+&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span></div>
+
+<hr>
+
+<h2>The 6 Mental Models to Carry Forward</h2>
+
+<div class="g2">
+  <div class="card cn">
+    <h4 class="tn">1. Prompts are compiled programs</h4>
+    <p style="font-size:13.5px">A prompt is not just text &mdash; it encodes your intent the same way code does. Like all programs, it can be compiled (DSPy), tested (metric function), and optimized (GEPA). Stop writing prompts by hand; write evaluation functions instead.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">2. Scalars are lossy</h4>
+    <p style="font-size:13.5px">Reducing a failure to a score of "0.4" throws away the diagnosis. GEPA preserves the full execution trace so a reflection LLM can understand <em>exactly</em> what went wrong and propose a precise fix.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">3. Targeted beats random</h4>
+    <p style="font-size:13.5px">Random prompt variations are inefficient. A targeted mutation &mdash; "fix the citation format reference in step 2" &mdash; converges 35x faster than RL-style random perturbation because it is guided by understanding, not probability.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">4. Skills are textual programs</h4>
+    <p style="font-size:13.5px">A markdown skill file has implicit inputs, outputs, and measurable behavior. It can be evaluated on benchmark tasks and improved via GEPA. This insight is the foundation of Hermes self-evolution.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">5. Your history is training data</h4>
+    <p style="font-size:13.5px">Every past conversation where the AI underperformed is a training signal. SessionDB extracts this signal automatically from <code>~/.claude/history.jsonl</code> and turns it into a curated evaluation set for the skills that caused those failures.</p>
+  </div>
+  <div class="card cn">
+    <h4 class="tn">6. No GPU, API cost only</h4>
+    <p style="font-size:13.5px">Everything here works with LLM APIs. No model fine-tuning, no GPU, no custom infrastructure. A full GEPA optimization run costs $2&ndash;10 and takes minutes to a few hours. The barrier to entry is extremely low.</p>
+  </div>
+</div>
+
+</div><!-- /sub-bigpic -->
+
+
+<!-- ───────────────────── FOR YOU TAB ───────────────────── -->
+<div id="sub-you" class="subsec">
+
+<h2>How This Helps Your Claude Code Workflow</h2>
+
+<div class="call ct">
+  <strong>You do not need Hermes to benefit</strong>
+  DSPy and GEPA work on any text-based optimization target. Your Claude Code skill files, CLAUDE.md instructions, and MCP tool descriptions are all valid GEPA targets right now.
+</div>
+
+<h3>Practical Roadmap</h3>
+
+<div class="tl">
+  <div class="ti on" onclick="togTl2(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 1</span>
+      <strong>Shift mindset: write evaluation functions, not prompts</strong>
+    </div>
+    <div class="tbody">
+      <p>Your CLAUDE.md and custom skill files are structured prompts with implicit inputs and outputs. Instead of editing them by hand, define <em>what good looks like</em> as a scoring function and let DSPy + GEPA find the best phrasing.</p>
+      <p style="font-size:13.5px;color:var(--dim);margin-top:8px">Concretely: write 10&ndash;20 examples of tasks you want done correctly, plus a function that scores the output. That is your entire contribution. The optimization is automatic.</p>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl2(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 2</span>
+      <strong>Optimize your MCP tool descriptions with GEPA</strong>
+    </div>
+    <div class="tbody">
+      <p>Every MCP tool in your <code>~/.claude/mcp.json</code> has a description string. GEPA can evolve these to make Claude call them more accurately.</p>
+      <pre style="font-size:12px"><code><span class="kw">from</span> gepa.adapters.mcp <span class="kw">import</span> <span class="cl">MCPAdapter</span>
+
+adapter = <span class="cl">MCPAdapter</span>(
+    server_config={<span class="st">"type"</span>: <span class="st">"stdio"</span>, <span class="st">"command"</span>: <span class="st">"my-server"</span>},
+    tools_to_optimize=[<span class="st">"search_code"</span>, <span class="st">"edit_file"</span>, <span class="st">"run_tests"</span>],
+    feedback_fn=<span class="kw">lambda</span> gold, pred: (
+        <span class="fn">score_tool_usage</span>(pred),
+        <span class="st">f"Tool called with wrong argument: {pred.args}"</span>
+    )
+)
+evolved = adapter.<span class="fn">run</span>(num_iterations=<span class="nu">10</span>)</code></pre>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl2(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 3</span>
+      <strong>Build a DSPy program for a complex repeated task</strong>
+    </div>
+    <div class="tbody">
+      <p>If you have a multi-step task you repeat regularly (e.g., "analyze paper &rarr; extract claims &rarr; write methods section &rarr; format citations"), encode it as a DSPy pipeline. Compile it once against your own examples. Use the compiled <code>.json</code> as the instruction set forever.</p>
+      <pre style="font-size:12px"><code><span class="kw">class</span> <span class="cl">MyResearchWorkflow</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="va">self</span>.extract = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"paper_text -> claims: list"</span>)
+        <span class="va">self</span>.write   = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"claims, equations -> methods_tex: str"</span>)
+
+<span class="cm"># Compile once against your own papers as examples</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(metric=my_feedback)
+compiled  = optimizer.<span class="fn">compile</span>(<span class="cl">MyResearchWorkflow</span>(), trainset=data)
+compiled.<span class="fn">save</span>(<span class="st">"research_workflow.json"</span>)  <span class="cm"># reuse forever</span></code></pre>
+    </div>
+  </div>
+
+  <div class="ti" onclick="togTl2(this)">
+    <div class="tdot" style="border-color:var(--grn)"></div>
+    <div class="thead" style="border-color:rgba(82,224,160,.2)">
+      <span class="tbadge" style="background:var(--grn-d);color:var(--grn)">Step 4</span>
+      <strong>Apply the Hermes pipeline to your own skill files</strong>
+    </div>
+    <div class="tbody">
+      <p>Clone the Hermes self-evolution repo and point it at your own Claude Code skills directory. The <code>--eval-source sessiondb</code> flag will read your real session history.</p>
+      <pre style="font-size:12px"><code><span class="cm"># Clone and set up</span>
+git clone https://github.com/NousResearch/hermes-agent-self-evolution
+cd hermes-agent-self-evolution
+pip install -e <span class="st">".[dev]"</span>
+
+<span class="cm"># Point at your Claude Code skills (adjust path as needed)</span>
+export HERMES_AGENT_REPO=~/.claude
+
+<span class="cm"># Evolve using your real Claude Code session history</span>
+python -m evolution.skills.evolve_skill \
+    --skill your-research-workflow \
+    --iterations <span class="nu">15</span> \
+    --eval-source sessiondb
+<span class="cm"># Reads ~/.claude/history.jsonl automatically</span></code></pre>
+      <p style="font-size:13px;color:var(--dim);margin-top:10px">This reads your actual Claude Code conversations, finds where your skill contributed to failures, runs GEPA to fix those specific issues, and produces a better version of your skill file &mdash; personalized to your exact workflow.</p>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<h2>The Full Workflow in Three Sentences</h2>
+
+<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-top:16px">
+  <p style="font-size:16px;line-height:1.8"><span class="td"><strong>DSPy</strong></span> lets you declare AI tasks as typed Signatures and compose them into pipelines using plain Python, separating the <em>what</em> (your intent) from the <em>how</em> (the prompt).</p>
+  <p style="font-size:16px;line-height:1.8;margin-top:12px"><span class="tg"><strong>GEPA</strong></span> takes any text-based parameter, runs it on test cases, uses an LLM to read the failure traces and diagnose what went wrong in plain English, then generates targeted mutations &mdash; 35x cheaper than RL and human-readable throughout.</p>
+  <p style="font-size:16px;line-height:1.8;margin-top:12px"><span class="th"><strong>Hermes self-evolution</strong></span> applies this same loop to an AI agent's own skill files, reading real session history to identify failures and automatically improving the specific skills that caused them &mdash; all at API cost, all without a GPU, all with a human reviewing the final PR before it ships.</p>
+</div>
+
+</div><!-- /sub-you -->
+
+
+<!-- ───────────────────── QUIZ TAB ───────────────────── -->
+<div id="sub-quiz" class="subsec">
+
+<h2>Final Quiz &mdash; All Three Topics</h2>
+
+<div class="qcard">
+  <p><strong>Q: GEPA is 35x more sample-efficient than RL. The core reason is:</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'q1')">It parallelizes evaluations across many GPUs</button>
+    <button class="qopt" onclick="qa(this,false,'q1')">It uses smarter random mutation heuristics</button>
+    <button class="qopt" onclick="qa(this,true,'q1')">It passes full execution traces to a reflection LLM, enabling targeted mutations instead of random search</button>
+    <button class="qopt" onclick="qa(this,false,'q1')">It uses a larger and more diverse training dataset</button>
+  </div>
+  <div id="qf-q1" class="qfb ok"><strong>Exactly right!</strong> RL says "score = 0.4." GEPA says "step 3 failed because the citation format was wrong &mdash; expected [1] but got (Smith, 2024)." That specificity lets GEPA propose a precise fix in 1&ndash;3 iterations that RL would need hundreds of random attempts to stumble upon.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: In DSPy, a Signature answers which question about an LLM call?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'q2')">How good is it? (quality score)</button>
+    <button class="qopt" onclick="qa(this,false,'q2')">How should it be executed? (strategy)</button>
+    <button class="qopt" onclick="qa(this,true,'q2')">What should it do? (typed inputs and outputs)</button>
+    <button class="qopt" onclick="qa(this,false,'q2')">Which model should run it?</button>
+  </div>
+  <div id="qf-q2" class="qfb ok"><strong>Correct!</strong> Signature = WHAT (typed inputs/outputs). Module = HOW (Predict, ChainOfThought, ReAct). Optimizer = HOW GOOD + how to improve it. This three-layer separation is what makes DSPy programs composable, swappable, and automatically optimizable.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: Hermes self-evolution uses DSPy + GEPA on its own skill files. What makes this possible?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'q3')">Skill files are Python code that can be compiled with normal tools</button>
+    <button class="qopt" onclick="qa(this,true,'q3')">Skill files are textual parameters with measurable behavior &mdash; they can be evaluated on benchmark tasks and scored</button>
+    <button class="qopt" onclick="qa(this,false,'q3')">Hermes has special access to its own model weights for fine-tuning</button>
+    <button class="qopt" onclick="qa(this,false,'q3')">Skill files are templates that get filled in at runtime by the LLM</button>
+  </div>
+  <div id="qf-q3" class="qfb ok"><strong>Correct!</strong> The key insight: a markdown skill file can be run on benchmark tasks and scored, just like a prompt. That makes it a valid GEPA target. The only requirement for GEPA to optimize something is: (1) it has a textual parameter, and (2) you can evaluate it and return a (score, feedback) pair.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: You write a GEPA feedback function that returns (0.7, "word count 420 exceeds target 300"). How does GEPA use the string part?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'q4')">It is ignored; only the 0.7 score matters for optimization</button>
+    <button class="qopt" onclick="qa(this,false,'q4')">It is logged for human inspection but does not affect mutations</button>
+    <button class="qopt" onclick="qa(this,true,'q4')">It is passed to the Reflection LLM, which reads it to understand the failure and propose a mutation that enforces the word count limit</button>
+    <button class="qopt" onclick="qa(this,false,'q4')">It is used to compute a gradient for back-propagation through the prompt</button>
+  </div>
+  <div id="qf-q4" class="qfb ok"><strong>Correct!</strong> The feedback string is the primary input to the Reflect step. The reflection LLM reads "word count 420 exceeds target 300," understands the problem, and proposes a mutation like "Add 'Keep your answer under 300 words' to the instruction." Without the string, the LLM would only see 0.7 and have no idea what to fix.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: Hermes self-evolution uses a "semantic preservation check" before deploying any evolved skill. What is it checking for?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'q5')">Whether the skill file is syntactically valid Python</button>
+    <button class="qopt" onclick="qa(this,false,'q5')">Whether the skill file is shorter than the original</button>
+    <button class="qopt" onclick="qa(this,true,'q5')">Whether the evolved skill still accomplishes the same purpose as the original, preventing GEPA from gaming the metric by changing what the skill does</button>
+    <button class="qopt" onclick="qa(this,false,'q5')">Whether the skill file passes the linter</button>
+  </div>
+  <div id="qf-q5" class="qfb ok"><strong>Correct!</strong> Without this check, GEPA could "cheat" by, for example, evolving a code review skill into one that always says "LGTM" &mdash; which scores 100% on naive benchmarks but is obviously wrong. The LLM judge compares the evolved version's intent to the original and flags drift before deployment.</div>
+</div>
+
+<!-- COMPLETION BLOCK -->
+<div class="completion">
+  <p style="font-size:22px;font-weight:800;color:var(--grn);margin-bottom:10px">All three guides complete!</p>
+  <p style="color:var(--dim);font-size:14px;max-width:520px;margin:0 auto 20px">DSPy declares the task. GEPA evolves it. Hermes applies the loop to itself. Together: a self-improving AI agent stack at API cost, no GPU, ~$2&ndash;10 per improvement cycle.</p>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <a href="01_dspy.html" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r);background:var(--dspy);color:#0a0a14;font-weight:700;font-size:13px;text-decoration:none">&#9889; Review DSPy</a>
+    <a href="02_gepa.html" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--r);background:var(--gepa);color:#0a0a14;font-weight:700;font-size:13px;text-decoration:none">&#x1F9EC; Review GEPA</a>
+  </div>
+</div>
+
+</div><!-- /sub-quiz -->
+
+<!-- BACK BANNER -->
+<div class="back-banner">
+  <div>
+    <span style="font-size:11px;color:var(--dim)">&#8592; Previous</span><br>
+    <strong class="tg">GEPA &mdash; The Evolutionary Optimizer</strong>
+  </div>
+  <a class="btn-back" href="02_gepa.html">&#8592; GEPA</a>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// Section tabs (within the page)
+function showSec(id, btn) {
+  document.querySelectorAll('.subsec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('on'));
+  document.getElementById('sub-' + id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Timeline toggle
+function togTl(item) {
+  const was = item.classList.contains('on');
+  // Only close siblings in the same .tl
+  item.closest('.tl').querySelectorAll('.ti').forEach(i => i.classList.remove('on'));
+  if (!was) item.classList.add('on');
+}
+
+// Second timeline (in For You tab)
+function togTl2(item) {
+  const was = item.classList.contains('on');
+  item.closest('.tl').querySelectorAll('.ti').forEach(i => i.classList.remove('on'));
+  if (!was) item.classList.add('on');
+}
+
+// Quiz
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    opts.forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+</script>
+</body>
+</html>

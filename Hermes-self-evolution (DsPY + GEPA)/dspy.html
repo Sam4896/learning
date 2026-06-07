@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSPy — Complete Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070f;--s1:#0f0f1c;--s2:#161625;--s3:#1d1d2e;--border:#272740;
+  --text:#cdd6f4;--dim:#7480a0;
+  --dspy:#5ba3f5;--dspy-d:rgba(91,163,245,.12);--dspy-b:rgba(91,163,245,.35);
+  --gepa:#f5a623;--gepa-d:rgba(245,166,35,.12);--gepa-b:rgba(245,166,35,.35);
+  --herm:#b06cf5;--herm-d:rgba(176,108,245,.12);--herm-b:rgba(176,108,245,.35);
+  --blue:#89b4fa;--blue-d:rgba(137,180,250,.12);--blue-b:rgba(137,180,250,.3);
+  --grn:#a6e3a1;--grn-d:rgba(166,227,161,.12);--grn-b:rgba(166,227,161,.3);
+  --yel:#f9e2af;--yel-d:rgba(249,226,175,.12);--yel-b:rgba(249,226,175,.3);
+  --pnk:#f38ba8;--pnk-d:rgba(243,139,168,.12);--pnk-b:rgba(243,139,168,.3);
+  --lav:#b4befe;--lav-d:rgba(180,190,254,.12);
+  --ora:#fab387;--ora-d:rgba(250,179,135,.12);
+  --red:#f56b6b;--code:#010109;--r:8px;
+  --surface:#0f0f1c;--surface2:#161625;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.7;min-height:100vh}
+
+/* TOP PROGRESS BAR */
+#top-prog{position:fixed;top:0;left:0;width:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--lav));z-index:999;transition:width .2s}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:300;background:rgba(7,7,15,.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:6px;margin-top:3px}
+.nav-logo{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+.ntab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid transparent;transition:.2s;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.ntab:hover{background:var(--s2);color:var(--text)}
+.ntab.cur{background:var(--dspy-d);color:var(--dspy);border-color:var(--dspy-b)}
+.ntab.g:hover{background:var(--gepa-d);color:var(--gepa)}
+.ntab.h:hover{background:var(--herm-d);color:var(--herm)}
+
+/* TAB BAR */
+.tbar{position:sticky;top:52px;z-index:200;background:rgba(7,7,15,.97);border-bottom:1px solid var(--border);display:flex;align-items:stretch}
+.tbar-btn{flex:1;max-width:220px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--dim);transition:.2s;border-bottom:2px solid transparent;font-family:inherit}
+.tbar-btn:hover{color:var(--text);background:var(--s2)}
+.tbar-btn.on{color:var(--dspy);border-bottom-color:var(--dspy);background:var(--dspy-d)}
+
+/* LAYOUT */
+.wrap{max-width:920px;margin:0 auto;padding:36px 22px}
+.lesson{max-width:820px;margin:0 auto;padding:0 22px 80px}
+
+/* HERO */
+.hero-guide{padding:64px 22px 44px;text-align:center;background:radial-gradient(ellipse at top,rgba(91,163,245,.1) 0%,transparent 60%)}
+.hero-guide h1{font-size:clamp(26px,4.5vw,50px);font-weight:800;line-height:1.2;margin-bottom:14px}
+.hero-guide p{font-size:17px;color:var(--dim);max-width:540px;margin:0 auto 24px}
+.hero-math{padding:60px 22px 48px;text-align:center;background:radial-gradient(ellipse at 50% 0%,rgba(137,180,250,.12) 0%,transparent 65%)}
+.hero-math h1{font-size:clamp(28px,5vw,52px);font-weight:900;line-height:1.15;margin-bottom:16px}
+.hero-math p{font-size:17px;color:var(--dim);max-width:500px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:8px;background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;color:var(--dim)}
+.pill-guide{display:inline-flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:7px 18px;font-size:12px;color:var(--dim)}
+.pill-guide span,.pill span{color:var(--border)}
+
+/* TYPE — shared */
+h2{font-size:24px;font-weight:700;margin:0 0 14px}
+h3{font-size:18px;font-weight:600;margin:0 0 10px}
+h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+p{margin-bottom:12px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:20px;margin-bottom:10px}li{margin-bottom:4px}
+strong{font-weight:600;color:var(--text)}
+.td{color:var(--dspy)}.tg{color:var(--gepa)}.th{color:var(--herm)}.tn{color:var(--grn)}.tdim{color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+/* GUIDE TAB STYLES */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:18px}
+.cd{border-left:3px solid var(--dspy)}.cn{border-left:3px solid var(--grn)}
+.call{border-radius:var(--r);padding:14px 18px;margin:14px 0;border-left:4px solid}
+.ci{background:var(--dspy-d);border-color:var(--dspy)}.cw{background:var(--gepa-d);border-color:var(--gepa)}
+.ct{background:var(--grn-d);border-color:var(--grn)}.ca{background:var(--herm-d);border-color:var(--herm)}
+.call strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ci strong{color:var(--dspy)}.cw strong{color:var(--gepa)}.ct strong{color:var(--grn)}.ca strong{color:var(--herm)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{padding:9px 13px;text-align:left;background:var(--s2);color:var(--dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.018)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.g2{grid-template-columns:1fr}}
+.cmp-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cbad{border:1px solid rgba(245,107,107,.3);background:rgba(245,107,107,.06);border-radius:var(--r);padding:14px}
+.cgood{border:1px solid rgba(82,224,160,.3);background:rgba(82,224,160,.06);border-radius:var(--r);padding:14px}
+@media(max-width:620px){.cmp-g{grid-template-columns:1fr}}
+.arch-wrap{background:var(--code);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:20px 0}
+.arch-wrap svg{display:block;width:100%;max-height:180px}
+.node-btn{cursor:pointer}
+.node-btn rect{transition:fill .2s,stroke .2s}
+.node-btn:hover rect,.node-btn.sel rect{stroke:var(--dspy)!important;fill:#1c2035!important}
+.dpanel{display:none;padding:18px;border-top:1px solid var(--border);background:var(--s2)}
+.dpanel.on{display:block;animation:sld .2s ease}
+.steps{counter-reset:s}
+.step{counter-increment:s;position:relative;padding:13px 14px 13px 48px;margin-bottom:10px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{content:counter(s);position:absolute;left:14px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--dspy);color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+.qcard{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.qopt{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--s1);color:var(--text);cursor:pointer;transition:.2s;font-size:13.5px;font-family:inherit}
+.qopt:hover{border-color:var(--dspy);background:var(--dspy-d)}
+.qopt:disabled{cursor:default}
+.qopt.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt.wrong{border-color:var(--red);background:rgba(245,107,107,.1);color:var(--red)}
+.qfb{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb.on{display:block}.qfb.ok{background:var(--grn-d);border-color:var(--grn)}.qfb.bad{background:rgba(245,107,107,.1);border-color:var(--red)}
+.next-banner{margin-top:48px;padding:24px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--gepa-b);background:var(--gepa-d)}
+.next-banner p{margin:0;font-size:14px;color:var(--dim)}
+.next-banner strong{display:block;font-size:17px;color:var(--gepa);margin-bottom:4px}
+.btn-next{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--r);background:var(--gepa);color:#0a0a14;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;transition:.2s}
+.btn-next:hover{opacity:.85}
+
+/* CODE — shared */
+pre{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12.5px;line-height:1.65;margin:14px 0}
+code{background:var(--blue-d);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--blue)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#cba6f7}.st{color:#a6e3a1}.cm{color:#45475a;font-style:italic}
+.fn{color:#89dceb}.cl{color:#89b4fa}.nu{color:#fab387}.va{color:#f9e2af}
+
+/* MATH TAB STYLES */
+.part{margin-top:72px;margin-bottom:32px}
+.part-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:10px}
+.part h2{font-size:clamp(22px,3.5vw,34px);font-weight:800;line-height:1.2}
+.part p.sub{font-size:16px;color:var(--dim);margin-top:10px}
+.concept{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin:18px 0}
+.concept-label{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.cb{border-left:4px solid var(--blue)}.concept-label.cb{color:var(--blue)}
+.cg-m{border-left:4px solid var(--grn)}.concept-label.cg-m{color:var(--grn)}
+.cy{border-left:4px solid var(--yel)}.concept-label.cy{color:var(--yel)}
+.cp{border-left:4px solid var(--pnk)}.concept-label.cp{color:var(--pnk)}
+.co{border-left:4px solid var(--ora)}.concept-label.co{color:var(--ora)}
+.analogy{background:linear-gradient(135deg,rgba(180,190,254,.08),rgba(137,180,250,.05));border:1px solid rgba(180,190,254,.25);border-radius:var(--r);padding:20px 22px;margin:18px 0}
+.analogy-emoji{font-size:32px;margin-bottom:8px}
+.analogy-title{font-weight:700;color:var(--lav);font-size:16px;margin-bottom:6px}
+.math{font-family:'Times New Roman',serif;font-style:italic;font-size:1.1em;color:var(--yel)}
+.math-block{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;margin:18px 0;text-align:center;font-family:'Times New Roman',serif;font-size:1.15em;color:var(--yel)}
+.math-ann{display:grid;grid-template-columns:1fr;gap:0;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);margin:18px 0;overflow:hidden}
+.math-row{display:flex;align-items:baseline;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border)}
+.math-row:last-child{border-bottom:none}
+.math-sym{font-family:'Times New Roman',serif;font-style:italic;color:var(--yel);min-width:100px;font-size:1.1em}
+.math-eq{color:var(--dim);font-size:14px;padding:0 4px}
+.math-desc{color:var(--text);font-size:13.5px}
+.widget{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0}
+.widget-header{padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.widget-title{font-weight:700;font-size:14px}
+.toggle-group{display:flex;gap:4px;background:var(--bg);border-radius:8px;padding:3px}
+.tgl{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;color:var(--dim);background:transparent;transition:.2s;font-family:inherit}
+.tgl.on{background:var(--blue);color:#07070f}
+.stepper-m{display:flex;gap:0;margin-bottom:20px;overflow-x:auto}
+.step-btn{flex:1;min-width:80px;padding:8px;text-align:center;cursor:pointer;border:none;background:var(--s2);color:var(--dim);font-size:12px;font-weight:600;border-right:1px solid var(--border);transition:.2s;font-family:inherit}
+.step-btn:last-child{border-right:none}
+.step-btn.on{background:var(--blue-d);color:var(--blue)}
+.step-panel-m{display:none}.step-panel-m.on{display:block}
+.score-track{background:var(--s2);border-radius:4px;height:10px;overflow:hidden;margin:6px 0}
+.score-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--pnk),var(--yel),var(--grn));transition:width .6s ease}
+.cmp-m{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.cmp-bad-m{background:rgba(243,139,168,.07);border:1px solid var(--pnk-b);border-radius:var(--r);padding:16px}
+.cmp-good-m{background:rgba(166,227,161,.07);border:1px solid var(--grn-b);border-radius:var(--r);padding:16px}
+@media(max-width:580px){.cmp-m{grid-template-columns:1fr}}
+.quiz-m{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:20px 0}
+.qopt-m{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--s1);color:var(--text);cursor:pointer;font-size:13.5px;transition:.2s;font-family:inherit}
+.qopt-m:hover{border-color:var(--blue)}.qopt-m:disabled{cursor:default}
+.qopt-m.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt-m.wrong{border-color:var(--pnk);background:var(--pnk-d);color:var(--pnk)}
+.qfb-m{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb-m.on{display:block}.qfb-m.ok{background:var(--grn-d);border-color:var(--grn)}.qfb-m.bad{background:var(--pnk-d);border-color:var(--pnk)}
+.think{background:var(--s2);border:2px dashed rgba(180,190,254,.35);border-radius:var(--r);padding:14px 18px;margin:12px 0;font-size:14px;color:var(--lav)}
+.think::before{content:'💭 ';font-size:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0;margin:20px 0}
+.fbox{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;text-align:center;min-width:110px;font-size:13px}
+.farr{font-size:20px;color:var(--dim);padding:0 8px;display:flex;align-items:center}
+.fbox.hi{border-color:var(--blue);background:var(--blue-d);color:var(--blue)}
+.reveal{display:none;animation:sld .3s ease}.reveal.on{display:block}
+.next-b{margin-top:60px;padding:20px 24px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:14px;background:rgba(166,227,161,.08);border:1px solid var(--grn-b)}
+.btn-n{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:var(--r);background:var(--grn);color:#07070f;font-weight:700;font-size:13px;text-decoration:none;transition:.2s}
+.btn-n:hover{opacity:.85}
+
+@keyframes sld{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--s1)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="top-prog"></div>
+
+<nav>
+  <span class="nav-logo">DSPy + GEPA + Hermes</span>
+  <a class="ntab cur" href="dspy.html">&#9889; DSPy</a>
+  <a class="ntab g" href="gepa.html">&#x1F9EC; GEPA</a>
+  <a class="ntab h" href="03_hermes.html">&#x1F40D; Hermes</a>
+</nav>
+
+<div class="tbar">
+  <button class="tbar-btn on" data-tab="guide" onclick="showTab('guide')">&#9889; Guide &amp; Code</button>
+  <button class="tbar-btn" data-tab="math" onclick="showTab('math')">&#8721; The Math</button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 1: GUIDE & CODE (from 01_dspy.html)
+     ════════════════════════════════════════════════════════════ -->
+<div id="tp-guide">
+
+<div class="hero-guide">
+  <h1><span class="td">DSPy</span> &mdash; The AI Compiler</h1>
+  <p>Stop writing prompts by hand. DSPy lets you <em>declare</em> what you want from an AI and <em>automatically finds</em> the best prompt to get it.</p>
+  <div class="pill-guide"><span>Python library</span><span>&#183;</span><span>Works with Claude, GPT, Gemini</span><span>&#183;</span><span>No GPU needed</span></div>
+</div>
+
+<div class="wrap">
+
+<h2>The Problem DSPy Solves</h2>
+<div class="call ca">
+  <strong>Analogy first</strong>
+  Imagine writing a web application where you had to manually write every CPU instruction. That would be insane &mdash; you use a compiler. Building LLM apps without DSPy is the same: you are manually "compiling" prompts by hand, and every time you change the AI model, they break.
+</div>
+<div class="cmp-g">
+  <div class="cbad">
+    <h4 style="color:var(--red)">Without DSPy &mdash; Hand-Written Prompts</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="st">"You are an expert researcher.
+Given this question: {question}
+And context: {context}
+Answer precisely. Use Vancouver
+citations. Max 300 words. Do
+not use first person. Always..."</span></code></pre>
+    <p style="font-size:13px;color:var(--dim)">Fragile. Hard-coded. Breaks when you switch models.</p>
+  </div>
+  <div class="cgood">
+    <h4 style="color:var(--grn)">With DSPy &mdash; Declarative</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="kw">class</span> <span class="cl">Answer</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question
+    with source citations."""</span>
+    question: <span class="cl">str</span> = <span class="cl">InputField</span>()
+    context:  <span class="cl">str</span> = <span class="cl">InputField</span>()
+    answer:   <span class="cl">str</span> = <span class="cl">OutputField</span>()</code></pre>
+    <p style="font-size:13px;color:var(--dim)">Declarative. Model-agnostic. Prompt text generated &amp; optimized automatically.</p>
+  </div>
+</div>
+<div class="call ci">
+  <strong>The PyTorch Analogy</strong>
+  In PyTorch, you write a forward pass and the framework figures out the backward pass. In DSPy, you write a pipeline and the framework figures out the prompts. Same principle: you specify structure; the system finds the parameters.
+</div>
+
+<hr>
+
+<h2>The Three Core Abstractions</h2>
+<p>Every DSPy program is built from exactly three things. <strong>Click each block</strong> to expand:</p>
+<div class="arch-wrap">
+  <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+    <g class="node-btn" id="nd-sig" onclick="selNode('sig')">
+      <rect x="28" y="28" width="168" height="104" rx="8" fill="#0f0f1c" stroke="#272740" stroke-width="1.5"/>
+      <text x="112" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128203;</text>
+      <text x="112" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Signature</text>
+      <text x="112" y="108" text-anchor="middle" font-size="11" fill="#7480a0">WHAT to do</text>
+      <text x="112" y="124" text-anchor="middle" font-size="11" fill="#7480a0">inputs &#8594; outputs</text>
+    </g>
+    <line x1="197" y1="80" x2="252" y2="80" stroke="#272740" stroke-width="2"/>
+    <polygon points="252,75 264,80 252,85" fill="#272740"/>
+    <text x="230" y="73" text-anchor="middle" font-size="10" fill="#404065">used by</text>
+    <g class="node-btn" id="nd-mod" onclick="selNode('mod')">
+      <rect x="264" y="28" width="168" height="104" rx="8" fill="#0f0f1c" stroke="#272740" stroke-width="1.5"/>
+      <text x="348" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#9881;&#65039;</text>
+      <text x="348" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Module</text>
+      <text x="348" y="108" text-anchor="middle" font-size="11" fill="#7480a0">HOW to do it</text>
+      <text x="348" y="124" text-anchor="middle" font-size="11" fill="#7480a0">execution strategy</text>
+    </g>
+    <line x1="433" y1="80" x2="488" y2="80" stroke="#272740" stroke-width="2"/>
+    <polygon points="488,75 500,80 488,85" fill="#272740"/>
+    <text x="466" y="73" text-anchor="middle" font-size="10" fill="#404065">compiled by</text>
+    <g class="node-btn" id="nd-opt" onclick="selNode('opt')">
+      <rect x="500" y="28" width="172" height="104" rx="8" fill="#0f0f1c" stroke="#272740" stroke-width="1.5"/>
+      <text x="586" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128295;</text>
+      <text x="586" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Optimizer</text>
+      <text x="586" y="108" text-anchor="middle" font-size="11" fill="#7480a0">HOW GOOD + improve</text>
+      <text x="586" y="124" text-anchor="middle" font-size="11" fill="#7480a0">auto-tune prompts</text>
+    </g>
+  </svg>
+  <div id="dp-sig" class="dpanel">
+    <h3 class="td">&#128203; Signature &mdash; The Contract</h3>
+    <p>A Signature declares <strong>what inputs go in</strong> and <strong>what outputs should come out</strong> without specifying <em>how</em> to get there. Think of it as a typed function signature for AI tasks.</p>
+    <div class="g2" style="margin-top:14px">
+      <div>
+        <h4>String form (quickest)</h4>
+        <pre><code><span class="cm"># "inputs -> outputs"</span>
+qa = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"question -> answer"</span>)
+result = qa(question=<span class="st">"What is DSPy?"</span>)
+<span class="fn">print</span>(result.answer)</code></pre>
+      </div>
+      <div>
+        <h4>Class form (full control)</h4>
+        <pre><code><span class="kw">class</span> <span class="cl">SummarizeCode</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Summarize what this code does."""</span>
+    code: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>()
+    summary: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(
+        desc=<span class="st">"2-3 sentence summary"</span>
+    )</code></pre>
+      </div>
+    </div>
+    <div class="call ct" style="margin-top:10px">
+      <strong>How the optimizer sees it</strong>
+      The docstring becomes the task instruction. The <code>desc</code> guides output content. The optimizer can <em>rewrite both</em> — that is how it improves prompts.
+    </div>
+  </div>
+  <div id="dp-mod" class="dpanel">
+    <h3 class="td">&#9881;&#65039; Module &mdash; The Strategy</h3>
+    <p>A Module wraps a Signature and adds a <strong>prompting strategy</strong>. Two modules can share the exact same Signature but prompt the LLM differently.</p>
+    <table style="margin-top:12px">
+      <tr><th>Module</th><th>Strategy</th><th>Use when&hellip;</th></tr>
+      <tr><td><code>Predict</code></td><td>Direct answer</td><td>Simple fast tasks, classification</td></tr>
+      <tr><td><code>ChainOfThought</code></td><td>Reason step-by-step, then answer</td><td>Any reasoning or multi-hop problem</td></tr>
+      <tr><td><code>ReAct</code></td><td>Reason + call tools in a loop</td><td>Agentic tasks requiring tool use</td></tr>
+      <tr><td><code>ProgramOfThought</code></td><td>Write &amp; execute Python code</td><td>Math, computation, data analysis</td></tr>
+      <tr><td><code>MultiChainComparison</code></td><td>Generate N candidates, compare</td><td>High-stakes decisions</td></tr>
+      <tr><td><code>Retry</code></td><td>Re-call with error feedback</td><td>When output must satisfy constraints</td></tr>
+    </table>
+    <pre style="margin-top:12px"><code><span class="cm"># Same Signature, three different strategies:</span>
+direct  = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"question -> answer"</span>)
+thinker = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"question -> answer"</span>)
+agent   = <span class="cl">dspy</span>.<span class="fn">ReAct</span>(<span class="st">"question -> answer"</span>, tools=[search_web])</code></pre>
+  </div>
+  <div id="dp-opt" class="dpanel">
+    <h3 class="td">&#128295; Optimizer &mdash; The Compiler</h3>
+    <p>The Optimizer takes your program + training examples + a scoring function and <strong>automatically finds better prompts</strong>. No gradients, no GPU.</p>
+    <div class="steps" style="margin-top:12px">
+      <div class="step"><strong>Bootstrap</strong> &mdash; Run your unoptimized program on training examples. Record every LLM call (the "trace").</div>
+      <div class="step"><strong>Generate Candidates</strong> &mdash; Extract successful traces as few-shot examples. Ask an LLM to propose improved instruction variants.</div>
+      <div class="step"><strong>Evaluate</strong> &mdash; Test each instruction+demo combo on a validation set. Score with your metric function (0.0&ndash;1.0).</div>
+      <div class="step"><strong>Save Winner</strong> &mdash; Serialize the best combination as a <code>.json</code> file. Load it in milliseconds later.</div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<h2>Building Your First DSPy Program</h2>
+<pre><code><span class="kw">import</span> dspy
+
+<span class="cm"># Step 1: Connect to an LLM</span>
+lm = <span class="cl">dspy</span>.<span class="fn">LM</span>(<span class="st">"anthropic/claude-sonnet-4-20250514"</span>)
+<span class="cl">dspy</span>.<span class="fn">configure</span>(lm=lm)
+
+<span class="cm"># Step 2: Declare WHAT you want (Signature)</span>
+<span class="kw">class</span> <span class="cl">AnswerWithReasoning</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question based on the context. Cite sources using [1], [2] notation."""</span>
+    question: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"The user's question"</span>)
+    context:  <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"Background information"</span>)
+    answer:   <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(desc=<span class="st">"Precise answer with inline citations"</span>)
+
+<span class="cm"># Step 3: Define HOW to execute (Module)</span>
+<span class="kw">class</span> <span class="cl">SmartQA</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="va">self</span>.answer = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="cl">AnswerWithReasoning</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, question, context):
+        <span class="kw">return</span> <span class="va">self</span>.answer(question=question, context=context)
+
+<span class="cm"># Step 4: Run it immediately (no optimization required)</span>
+qa = <span class="cl">SmartQA</span>()
+result = qa(question=<span class="st">"What is gradient descent?"</span>, context=<span class="st">"Gradient descent minimizes..."</span>)
+<span class="fn">print</span>(result.rationale)  <span class="cm"># step-by-step reasoning</span>
+<span class="fn">print</span>(result.answer)
+
+<span class="cm"># Step 5: Optimize against your own examples</span>
+<span class="kw">def</span> <span class="fn">my_metric</span>(example, prediction, trace=<span class="kw">None</span>):
+    <span class="kw">return</span> <span class="fn">score_answer_quality</span>(prediction.answer, example.expected_answer)
+
+optimizer = <span class="cl">dspy</span>.<span class="fn">MIPROv2</span>(metric=my_metric, auto=<span class="st">"medium"</span>)
+compiled  = optimizer.<span class="fn">compile</span>(qa, trainset=your_training_data)
+compiled.<span class="fn">save</span>(<span class="st">"optimized_qa.json"</span>)
+
+<span class="cm"># Later: load without re-optimizing</span>
+qa2 = <span class="cl">SmartQA</span>()
+qa2.<span class="fn">load</span>(<span class="st">"optimized_qa.json"</span>)</code></pre>
+
+<hr>
+
+<h2>Composing a Multi-Step Pipeline</h2>
+<pre><code><span class="kw">class</span> <span class="cl">ResearchPipeline</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="va">self</span>.find_papers  = <span class="cl">dspy</span>.<span class="fn">ReAct</span>(<span class="st">"topic -> papers: list"</span>, tools=[search_arxiv])
+        <span class="va">self</span>.synthesize   = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"topic, papers -> synthesis, gaps"</span>)
+        <span class="va">self</span>.write_review = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"topic, synthesis, gaps -> review: str"</span>)
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, topic):
+        papers    = <span class="va">self</span>.find_papers(topic=topic)
+        synthesis = <span class="va">self</span>.synthesize(topic=topic, papers=papers.papers)
+        review    = <span class="va">self</span>.write_review(topic=topic, synthesis=synthesis.synthesis, gaps=synthesis.gaps)
+        <span class="kw">return</span> review
+
+<span class="cm"># The optimizer improves ALL three sub-modules simultaneously</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(metric=review_quality_metric)
+compiled  = optimizer.<span class="fn">compile</span>(<span class="cl">ResearchPipeline</span>(), trainset=data)</code></pre>
+
+<hr>
+
+<h2>Integrating DSPy with LangGraph</h2>
+<p>LangGraph owns the workflow; DSPy owns LLM call quality within each step.</p>
+<pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> <span class="cl">StateGraph</span>
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="cl">TypedDict</span>
+<span class="kw">import</span> dspy
+
+lit_reviewer = <span class="cl">LitReviewPipeline</span>()
+lit_reviewer.<span class="fn">load</span>(<span class="st">"compiled_lit_reviewer.json"</span>)
+
+<span class="kw">class</span> <span class="cl">PaperState</span>(<span class="cl">TypedDict</span>):
+    topic: <span class="cl">str</span>; literature: <span class="cl">str</span>
+
+<span class="kw">def</span> <span class="fn">lit_review_node</span>(state: <span class="cl">PaperState</span>) -&gt; <span class="cl">PaperState</span>:
+    result = lit_reviewer(topic=state[<span class="st">"topic"</span>])
+    <span class="kw">return</span> {<span class="st">"literature"</span>: result.review_paragraph}
+
+workflow = <span class="cl">StateGraph</span>(<span class="cl">PaperState</span>)
+workflow.<span class="fn">add_node</span>(<span class="st">"literature"</span>, lit_review_node)
+workflow.<span class="fn">set_entry_point</span>(<span class="st">"literature"</span>)
+app = workflow.<span class="fn">compile</span>()</code></pre>
+
+<hr>
+
+<h2>Choosing the Right Optimizer</h2>
+<table>
+  <tr><th>Optimizer</th><th>Strategy</th><th>Best For</th><th>Evals Needed</th></tr>
+  <tr><td><code>BootstrapFewShot</code></td><td>Collect successful traces as examples</td><td>Quick baseline, small datasets</td><td>~50&ndash;200</td></tr>
+  <tr><td><code>BootstrapFewShotWithRandomSearch</code></td><td>Same + random search</td><td>Better accuracy on simple programs</td><td>~200&ndash;500</td></tr>
+  <tr><td><code>MIPROv2</code></td><td>Bayesian search over instruction+demo combos</td><td>General purpose</td><td>~200&ndash;1000</td></tr>
+  <tr><td style="color:var(--gepa)"><code>GEPA</code> &#10024;</td><td>Reflective evolutionary search</td><td>Complex pipelines, agents, tool use</td><td>100&ndash;500</td></tr>
+  <tr><td><code>GRPO</code></td><td>Gradient-based RL, fine-tunes model weights</td><td>When you have GPU access</td><td>5,000&ndash;25,000+</td></tr>
+</table>
+<div class="call cw">
+  <strong>When to choose GEPA over MIPROv2</strong>
+  If your program has multiple steps, uses tools, or fails in ways hard to capture with a single score — choose GEPA. It reads the full execution trace and diagnoses where a failure occurred.
+</div>
+
+<hr>
+
+<h2>DSPy Traces &mdash; The Bridge to GEPA</h2>
+<pre><code><span class="kw">with</span> <span class="cl">dspy</span>.<span class="fn">context</span>(trace=[]):
+    result = compiled_program(topic=<span class="st">"gradient descent"</span>)
+    trace  = <span class="cl">dspy</span>.settings.trace
+
+<span class="cm"># A trace for a 3-module pipeline:</span>
+[
+  {<span class="st">"module"</span>: <span class="st">"find_papers"</span>,  <span class="st">"input"</span>: {<span class="st">"topic"</span>: <span class="st">"..."</span>},
+   <span class="st">"output"</span>: {<span class="st">"papers"</span>: [...]}, <span class="st">"tool_calls"</span>: [...]},
+  {<span class="st">"module"</span>: <span class="st">"synthesize"</span>,   <span class="st">"input"</span>: {<span class="st">"..."</span>},
+   <span class="st">"output"</span>: {<span class="st">"synthesis"</span>: <span class="st">"..."</span>, <span class="st">"gaps"</span>: [...]}},
+  {<span class="st">"module"</span>: <span class="st">"write_review"</span>, <span class="st">"output"</span>: {<span class="st">"review"</span>: <span class="st">"..."</span>}, <span class="st">"score"</span>: <span class="nu">0.82</span>}
+]</code></pre>
+<p>GEPA consumes these traces. Instead of seeing only the final score, it reads the complete trace and asks a reflection LLM: <em>"Why did this fail? What step went wrong?"</em></p>
+
+<hr>
+
+<h2>Check Your Understanding</h2>
+<div class="qcard">
+  <p><strong>Q: You want a system that searches the web for papers and summarizes them. Which module handles the search step?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d1')">Predict</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ChainOfThought</button>
+    <button class="qopt" onclick="qa(this,true,'d1')">ReAct</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ProgramOfThought</button>
+  </div>
+  <div id="qf-d1" class="qfb ok"><strong>Correct!</strong> ReAct (Reason + Act) is the module built for tool-using agents. It lets the AI call your search function and reason about results in a loop.</div>
+</div>
+<div class="qcard">
+  <p><strong>Q: The Optimizer produces a .json file. What does it contain?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d2')">Fine-tuned model weights</button>
+    <button class="qopt" onclick="qa(this,true,'d2')">The winning prompt instructions and few-shot examples</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A compiled Python binary</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A Docker image</button>
+  </div>
+  <div id="qf-d2" class="qfb ok"><strong>Correct!</strong> Just text &mdash; the winning instruction string + selected few-shot demonstrations. No GPU, no model weights. Load it in milliseconds.</div>
+</div>
+<div class="qcard">
+  <p><strong>Q: What is the relationship between a Signature and a Module?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d3')">They are the same thing with different names</button>
+    <button class="qopt" onclick="qa(this,true,'d3')">The Signature declares WHAT to do; the Module decides HOW to execute it</button>
+    <button class="qopt" onclick="qa(this,false,'d3')">The Module declares inputs/outputs; the Signature chooses the strategy</button>
+    <button class="qopt" onclick="qa(this,false,'d3')">Signatures are only for inputs; Modules are only for outputs</button>
+  </div>
+  <div id="qf-d3" class="qfb ok"><strong>Correct!</strong> Signature = WHAT (typed inputs/outputs). Module = HOW (Predict, ChainOfThought, ReAct…). You can swap the Module without touching the Signature.</div>
+</div>
+
+<div class="next-banner">
+  <div>
+    <strong>Switch to the Math tab above &mdash; or go to GEPA</strong>
+    <p>See the visual math behind how DSPy optimizes prompts, or learn how GEPA takes it further.</p>
+  </div>
+  <a class="btn-next" href="gepa.html">GEPA &#8594;</a>
+</div>
+
+</div><!-- /wrap -->
+</div><!-- /tp-guide -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 2: THE MATH (from 04_math_dspy.html)
+     ════════════════════════════════════════════════════════════ -->
+<div id="tp-math" style="display:none">
+
+<div class="hero-math">
+  <div class="pill">No jargon without explanation &nbsp;&#183;&nbsp; Every concept has an example &nbsp;&#183;&nbsp; Math explained visually</div>
+  <h1>DSPy: The Math<br><span style="color:var(--blue)">Made Visual</span></h1>
+  <p>We start from absolute zero. What is an LLM? What is a prompt? Why does it break? Then we build up to the full math — step by step.</p>
+</div>
+
+<div class="lesson">
+
+<div class="part">
+  <div class="part-label">Part 1</div>
+  <h2>What Even Is an LLM? (2 minutes)</h2>
+  <p class="sub">Before anything else — let's make sure we understand what we're working with.</p>
+</div>
+
+<div class="analogy">
+  <div class="analogy-emoji">&#x1F52E;</div>
+  <div class="analogy-title">The World's Best Autocomplete</div>
+  <p>Your phone keyboard suggests the next word when you type. An LLM (Large Language Model) is the same idea, but it has read <em>most of the text ever written by humans</em>, so its suggestions are extraordinarily good.</p>
+  <p style="margin-top:8px;color:var(--dim);font-size:14px">It doesn't "think" or "understand" — it calculates: <em>"given everything before this point, what text is most likely to come next?"</em></p>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#127938; Try It: Watch an LLM Complete Text</span>
+    <div class="toggle-group">
+      <button class="tgl on" id="llm-btn1" onclick="setLLM(1)">Short prompt</button>
+      <button class="tgl" id="llm-btn2" onclick="setLLM(2)">Longer context</button>
+    </div>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div style="background:var(--code);border-radius:8px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.8">
+      <span style="color:var(--dim)">You give the LLM:</span><br>
+      <span id="llm-input" style="color:var(--yel)"></span><br><br>
+      <span style="color:var(--dim)">The LLM continues:</span><br>
+      <span id="llm-output" style="color:var(--grn)"></span><span id="llm-cursor" style="color:var(--grn)">&#9646;</span>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin-top:12px">&#9888;&#65039; The LLM has no idea what YOU want. It just produces the <em>statistically likely continuation</em>. To get useful output, you must craft careful instructions — that's the "prompt."</p>
+  </div>
+</div>
+
+<h3>So What Is a Prompt?</h3>
+<p>A <strong>prompt</strong> is the text you give the LLM to steer what it generates.</p>
+<div class="cmp-m">
+  <div class="cmp-bad-m">
+    <h4 style="color:var(--pnk)">Vague prompt</h4>
+    <p style="font-size:13.5px">"Translate this text: Bonjour"</p>
+    <p style="font-size:13px;color:var(--dim);margin-top:8px">Output: <em>"Translate this text: Hello"</em> — it continued the pattern, not your intent.</p>
+  </div>
+  <div class="cmp-good-m">
+    <h4 style="color:var(--grn)">Clear prompt</h4>
+    <p style="font-size:13.5px">"Translate the French word below into English. Return ONLY the English word.<br><br>French: Bonjour<br>English:"</p>
+    <p style="font-size:13px;color:var(--dim);margin-top:8px">Output: <em>"Hello"</em> ✓</p>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 2</div>
+  <h2>The Prompt Problem</h2>
+  <p class="sub">Why can't you just write a good prompt and use it forever?</p>
+</div>
+
+<div class="analogy">
+  <div class="analogy-emoji">&#x1F5FA;&#xFE0F;</div>
+  <div class="analogy-title">Giving Directions to a Specific Person</div>
+  <p>You give your friend directions: "turn left after the big oak tree." Perfect for your friend. But someone from another country doesn't know your streets. The directions were <em>calibrated for a specific person</em>.</p>
+  <p style="margin-top:8px;color:var(--dim);font-size:14px">Prompts are the same: carefully tuned for GPT-4 may completely fail on Claude or Llama, because each model has different "defaults."</p>
+</div>
+
+<div class="widget">
+  <div class="widget-header"><span class="widget-title">&#9888;&#65039; The Same Prompt, Different Models</span></div>
+  <div class="widget-body" style="padding:20px 18px">
+    <pre style="font-size:12.5px">"Summarize this paper in 2 sentences. Be technical. Focus on methodology."
+[paper text here]
+Summary:</pre>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:var(--grn-d);border:1px solid var(--grn-b);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--grn);margin-bottom:6px">GPT-4 ✓ Works great</div>
+        <p style="font-size:12.5px">"The authors propose a novel sparse attention mechanism that reduces complexity from O(n²) to O(n log n), validated across 5 benchmarks."</p>
+      </div>
+      <div style="background:var(--pnk-d);border:1px solid var(--pnk-b);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--pnk);margin-bottom:6px">Claude (same prompt) ✗ Different format</div>
+        <p style="font-size:12.5px">"Summary:<br>• This paper introduces...<br>• The methodology uses..."<br><span style="color:var(--dim)">(gave bullet points, not 2 sentences)</span></p>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:12px;background:var(--s2);border-radius:8px;font-size:13px">
+      <strong style="color:var(--yel)">The problem:</strong> You now have to manually rewrite the prompt for every new model. DSPy solves this.
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 3</div>
+  <h2>The DSPy Solution: Separate WHAT from HOW</h2>
+  <p class="sub">This is the core insight. Everything else follows from it.</p>
+</div>
+
+<div class="concept cb">
+  <div class="concept-label cb">Key Concept: "Declarative"</div>
+  <p>When you say <strong>WHAT</strong> you want without specifying <strong>HOW</strong> to get there, that's called <em>declarative</em>. The opposite — specifying every step — is called <em>imperative</em>.</p>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#9989; Imperative vs Declarative — Click to Compare</span>
+    <div class="toggle-group">
+      <button class="tgl on" id="d1" onclick="setDecl(1)">Imperative (How)</button>
+      <button class="tgl" id="d2" onclick="setDecl(2)">Declarative (What)</button>
+    </div>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div id="decl-panel-1">
+      <p style="font-size:13px;color:var(--dim);margin-bottom:10px">You specify every instruction manually:</p>
+      <pre style="font-size:12px"><span class="cm"># OLD WAY</span>
+prompt = <span class="st">"""You are an expert AI assistant. When given a research
+question and context, provide a thorough, precise answer.
+Structure your response: first acknowledge the question,
+then analyze the context, then provide your answer. Cite
+sources inline using [1] notation. Do not exceed 200 words.
+Question: {question}
+Context: {context}
+Answer:"""</span></pre>
+      <div style="margin-top:12px;padding:12px;background:var(--pnk-d);border-radius:8px;font-size:13px;color:var(--pnk)">
+        &#10060; Breaks on new models. Hard to improve. 20 hours of tuning for one task.
+      </div>
+    </div>
+    <div id="decl-panel-2" class="reveal">
+      <p style="font-size:13px;color:var(--dim);margin-bottom:10px">You specify only the contract — what goes in and what comes out:</p>
+      <pre style="font-size:12px"><span class="cm"># DSPY WAY</span>
+<span class="kw">class</span> <span class="cl">AnswerQuestion</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question using the context. Cite sources."""</span>
+    question: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>()
+    context:  <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>()
+    answer:   <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>()</pre>
+      <div style="margin-top:12px;padding:12px;background:var(--grn-d);border-radius:8px;font-size:13px;color:var(--grn)">
+        &#10003; DSPy generates the prompt automatically. Switch models? Re-optimize automatically.
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 4 · Building Block #1</div>
+  <h2>Signatures — The Job Description</h2>
+  <p class="sub">A Signature tells DSPy what task it should do. Think of it as a job posting for an AI task.</p>
+</div>
+
+<div class="math-block">
+  <em>f</em>(<em>x</em>) = <em>y</em>
+  <div style="font-size:13px;color:var(--dim);margin-top:8px;font-family:sans-serif;font-style:normal">"Give function <em>f</em> an input <em>x</em>, and it produces output <em>y</em>"</div>
+</div>
+<div class="math-block">
+  <em>f</em>( question: str, context: str ) &#10230; answer: str
+  <div style="font-size:13px;color:var(--dim);margin-top:8px;font-family:sans-serif;font-style:normal">"Give this AI task a question and context, get an answer back"</div>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#128203; Interactive: Anatomy of a Signature</span>
+    <span style="font-size:12px;color:var(--dim)">Click any part to see what it does</span>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div style="background:var(--code);border-radius:8px;padding:18px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9">
+      <span class="kw" style="cursor:pointer" onclick="showSigPart('class')" title="click">class </span><span class="cl" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('name')">WriteReview</span>(<span class="cl" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('base')">dspy.Signature</span>):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="st" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('doc')">"Write a 2-sentence review of the given paper."</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="va" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('inp1')">paper_abstract</span>: <span class="cl">str</span> = <span class="fn">dspy.InputField</span>(<span style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('desc')">desc=<span class="st">"the paper's abstract"</span></span>)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="va" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('inp2')">venue</span>: <span class="cl">str</span> = <span class="fn">dspy.InputField</span>()<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="va" style="cursor:pointer;text-decoration:underline dotted" onclick="showSigPart('out1')">review</span>: <span class="cl">str</span> = <span class="fn">dspy.OutputField</span>()
+    </div>
+    <div id="sig-explain" style="margin-top:14px;padding:14px;background:var(--s2);border-radius:8px;font-size:13.5px;min-height:60px;color:var(--lav)">
+      &#128077; Click any <u>underlined part</u> above to see what it means.
+    </div>
+  </div>
+</div>
+
+<div class="concept cy">
+  <div class="concept-label cy">Jargon Buster: "InputField" and "OutputField"</div>
+  <p><strong>InputField</strong> = data you provide to the AI. Like the ingredients in a recipe.</p>
+  <p style="margin-top:6px"><strong>OutputField</strong> = what you want the AI to produce. Like the finished dish.</p>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 5 · Building Block #2</div>
+  <h2>Modules — The Strategy</h2>
+  <p class="sub">A Module takes your Signature and decides <em>how</em> to execute it.</p>
+</div>
+
+<div class="analogy">
+  <div class="analogy-emoji">&#x1F468;&#x200D;&#x1F373;</div>
+  <div class="analogy-title">Same Recipe, Different Chef Techniques</div>
+  <p>A recipe (Signature) says: "inputs: flour, eggs → output: cake." But <em>how</em> you make that cake depends on your technique:</p>
+  <ul style="margin-top:8px;font-size:14px;color:var(--dim)">
+    <li><strong style="color:var(--text)">Predict:</strong> Follow the recipe literally, answer immediately.</li>
+    <li><strong style="color:var(--text)">ChainOfThought:</strong> Think through the steps before acting.</li>
+    <li><strong style="color:var(--text)">ReAct:</strong> Reason + use tools (oven, mixer, etc.) in a loop.</li>
+  </ul>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#9881;&#65039; See the Modules in Action</span>
+    <div class="toggle-group">
+      <button class="tgl on" id="m1" onclick="setModule(1)">Predict</button>
+      <button class="tgl" id="m2" onclick="setModule(2)">ChainOfThought</button>
+      <button class="tgl" id="m3" onclick="setModule(3)">ReAct</button>
+    </div>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <p style="font-size:13px;color:var(--dim);margin-bottom:12px">Task: "What is 17 × 8?"</p>
+    <div id="mod-panel-1">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--code);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">Code:</span><br><br><code style="font-size:12px">predictor = dspy.Predict("question -> answer")<br>result = predictor(question="17 × 8?")</code></div>
+        <div style="background:var(--s2);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">LLM output:</span><br><br><span style="color:var(--yel)">Input:</span> "17 × 8?"<br><span style="color:var(--pnk)">Output:</span> "142" ✗<br><br><span style="color:var(--dim);font-size:12px">No thinking. Often wrong on math.</span></div>
+      </div>
+      <div class="concept cb" style="margin-top:14px"><div class="concept-label cb">Predict — When to use it</div><p>Simple tasks where the answer is obvious. Classification, data extraction. Fast and cheap but no reasoning.</p></div>
+    </div>
+    <div id="mod-panel-2" class="reveal">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--code);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">Code:</span><br><br><code style="font-size:12px">cot = dspy.ChainOfThought("question -> answer")<br>result = cot(question="17 × 8?")</code></div>
+        <div style="background:var(--s2);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">LLM output:</span><br><br><span style="color:var(--lav)">Reasoning:</span> "17×8 = 17×(4+4) = 68+68 = 136"<br><span style="color:var(--grn)">Output:</span> "136" ✓</div>
+      </div>
+      <div class="concept cg-m" style="margin-top:14px"><div class="concept-label cg-m">ChainOfThought — When to use it</div><p>Any task requiring reasoning, multi-step logic. Use for math, argument analysis, complex Q&amp;A.</p></div>
+    </div>
+    <div id="mod-panel-3" class="reveal">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:var(--code);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">Code:</span><br><br><code style="font-size:12px">react = dspy.ReAct("topic -> summary",<br>&nbsp;&nbsp;tools=[search_arxiv])<br>result = react(topic="GEPA paper")</code></div>
+        <div style="background:var(--s2);padding:14px;border-radius:8px;font-size:12.5px"><span style="color:var(--dim)">LLM output:</span><br><br><span style="color:var(--ora)">Thought:</span> "I need to search"<br><span style="color:var(--ora)">Action:</span> search_arxiv("GEPA")<br><span style="color:var(--ora)">Obs:</span> [results...]<br><span style="color:var(--grn)">Output:</span> "GEPA is..."</div>
+      </div>
+      <div class="concept cp" style="margin-top:14px"><div class="concept-label cp">ReAct — When to use it</div><p>Tasks requiring external tools: web search, database queries, API calls, file reading.</p></div>
+    </div>
+  </div>
+</div>
+
+<h3>The Math of Chain of Thought</h3>
+<p>Without reasoning, the AI tries to go directly from input to output:</p>
+<div class="math-block"><em>P</em>( answer | question )<div style="font-size:13px;color:var(--dim);margin-top:8px;font-family:sans-serif;font-style:normal">"Probability of getting the right answer, given only the question"</div></div>
+<p>With Chain of Thought, we <em>split the problem</em>. We first generate a reasoning chain <em>r</em>, then the answer:</p>
+<div class="math-block" style="font-size:1.1em">
+  <em>P</em>( answer | question ) = &#x2211;<sub>r</sub> <em>P</em>( answer | <strong>r</strong>, question ) &times; <em>P</em>( <strong>r</strong> | question )
+  <div style="font-size:13px;color:var(--dim);margin-top:10px;font-family:sans-serif;font-style:normal">
+    "Sum over all reasoning chains <em>r</em>: P(correct answer given reasoning) × P(that reasoning)"
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 6 · Building Block #3</div>
+  <h2>Optimizers — The Automatic Improvement Machine</h2>
+</div>
+
+<div class="analogy">
+  <div class="analogy-emoji">&#x1F3D4;&#xFE0F;</div>
+  <div class="analogy-title">Climbing a Mountain in the Dark</div>
+  <p>Imagine you're on a mountain range at night. You can't see anything, but you can feel whether you're going uphill or downhill. Optimization is the same: you can't "see" which prompt is best, but you can <em>evaluate</em> prompts and climb toward better ones.</p>
+</div>
+
+<h3>What Does "Optimize" Mean Formally?</h3>
+<div class="math-block" style="font-size:1.2em">
+  <strong><em>&#952;</em>*</strong> = argmax<sub><em>&#952;</em></sub> &#x1D53C;<sub>(<em>x</em>,<em>y</em>)&#x223C;&#x1D49F;</sub> [<em>M</em>(<em>P<sub>&#952;</sub></em>(<em>x</em>), <em>y</em>)]
+</div>
+<div class="math-ann">
+  <div class="math-row"><span class="math-sym"><em>&#952;</em></span><span class="math-eq">=</span><span class="math-desc">Our prompt settings (instruction text + example demonstrations). This is what gets optimized.</span></div>
+  <div class="math-row"><span class="math-sym"><em>&#952;</em>*</span><span class="math-eq">=</span><span class="math-desc">The <strong>best</strong> prompt settings — what we're trying to find (star means "optimal").</span></div>
+  <div class="math-row"><span class="math-sym">argmax<sub>&#952;</sub></span><span class="math-eq">=</span><span class="math-desc">"Find the value of &#952; that makes everything after it as <strong>large as possible</strong>."</span></div>
+  <div class="math-row"><span class="math-sym">&#x1D53C;[...]</span><span class="math-eq">=</span><span class="math-desc">Expected value = <strong>average</strong>. We average over all our test examples.</span></div>
+  <div class="math-row"><span class="math-sym">(<em>x</em>,<em>y</em>)&#x223C;&#x1D49F;</span><span class="math-eq">=</span><span class="math-desc">Sampling input-output pairs from dataset &#x1D49F;. x is a question, y is the expected answer.</span></div>
+  <div class="math-row"><span class="math-sym"><em>M</em>(<em>a</em>,<em>b</em>)</span><span class="math-eq">=</span><span class="math-desc">The <strong>metric function</strong>: how good was prediction <em>a</em> vs. correct answer <em>b</em>? Returns 0.0–1.0.</span></div>
+  <div class="math-row"><span class="math-sym"><em>P<sub>&#952;</sub></em>(<em>x</em>)</span><span class="math-eq">=</span><span class="math-desc">Our AI program with settings &#952;, applied to input x. Produces a prediction.</span></div>
+</div>
+
+<div class="concept cy">
+  <div class="concept-label cy">In Plain English</div>
+  <p>"Find the prompt settings &#952; that, on average across all our test examples, make our AI program produce outputs that score highest according to our metric."</p>
+</div>
+
+<h3>Why Can't We Use Gradients?</h3>
+<div class="cmp-m">
+  <div class="cmp-bad-m">
+    <h4 style="color:var(--pnk)">Neural net weights (numbers)</h4>
+    <p style="font-size:13px">Parameter: <code>w = 0.7423</code><br>Gradient says: "increase w by 0.01"<br>New w: <code>0.7523</code> → score improves ✓</p>
+    <p style="font-size:12px;color:var(--dim);margin-top:6px">Works because numbers are continuous.</p>
+  </div>
+  <div class="cmp-bad-m">
+    <h4 style="color:var(--pnk)">Prompt text (discrete)</h4>
+    <p style="font-size:13px">Parameter: <code>"Answer concisely."</code><br>Gradient says: "increase &#952; by 0.01"<br>New &#952;: <code>"Answer concisely.???"</code> ← meaningless ✗</p>
+    <p style="font-size:12px;color:var(--dim);margin-top:6px">Text is discrete — can't "add 0.01" to a word.</p>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 7</div>
+  <h2>The Compilation Algorithm</h2>
+  <p class="sub">Here's exactly what happens when you call <code>optimizer.compile()</code>.</p>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#9654; Step Through the Compilation Process</span>
+    <span style="font-size:12px;color:var(--dim)">Click each step</span>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div class="stepper-m">
+      <button class="step-btn on" id="sb1" onclick="setStep(1)">1 Bootstrap</button>
+      <button class="step-btn" id="sb2" onclick="setStep(2)">2 Generate</button>
+      <button class="step-btn" id="sb3" onclick="setStep(3)">3 Evaluate</button>
+      <button class="step-btn" id="sb4" onclick="setStep(4)">4 Output</button>
+    </div>
+    <div id="sp1" class="step-panel-m on">
+      <h4 style="color:var(--blue);margin-bottom:10px">Step 1: Bootstrap — Run on Training Examples</h4>
+      <p style="font-size:13.5px">DSPy runs your <em>unoptimized</em> program on every training example. It records the complete execution — every LLM call, every input, every output. This recording is called a <strong>trace</strong>.</p>
+      <div style="margin-top:14px;background:var(--code);border-radius:8px;padding:14px;font-size:12.5px">
+        <span style="color:var(--dim)">Your 20 training examples:</span><br><br>
+        <span style="color:var(--grn)">Example 1: Q="What is gradient descent?" → ✓ correct (score: 0.9)</span><br>
+        <span style="color:var(--grn)">Example 2: Q="Explain backpropagation?" → ✓ correct (score: 0.85)</span><br>
+        <span style="color:var(--pnk)">Example 3: Q="What is a Transformer?" → ✗ too vague (score: 0.4)</span><br>
+        <span style="color:var(--dim)">...</span>
+      </div>
+    </div>
+    <div id="sp2" class="step-panel-m">
+      <h4 style="color:var(--blue);margin-bottom:10px">Step 2: Generate Candidates</h4>
+      <p style="font-size:13.5px">DSPy generates <em>many candidate prompts</em> in two ways:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div style="background:var(--s2);padding:14px;border-radius:8px"><h4 style="color:var(--lav)">Demo candidates</h4><div style="font-size:12px;margin-top:6px;color:var(--dim)">Candidate A: [example 1, 2]<br>Candidate B: [example 2, 5]<br>Candidate C: [example 1, 5, 7]<br>...</div></div>
+        <div style="background:var(--s2);padding:14px;border-radius:8px"><h4 style="color:var(--lav)">Instruction candidates</h4><div style="font-size:12px;margin-top:6px;color:var(--dim)">"Answer the question."<br>"Answer precisely, citing sources."<br>"Provide a technical answer with math."<br>...</div></div>
+      </div>
+    </div>
+    <div id="sp3" class="step-panel-m">
+      <h4 style="color:var(--blue);margin-bottom:10px">Step 3: Evaluate All Candidates</h4>
+      <p style="font-size:13.5px">Each candidate prompt is tested on a held-out <strong>validation set</strong>. Every candidate gets a score:</p>
+      <div id="cand-scores" style="margin-top:12px"></div>
+    </div>
+    <div id="sp4" class="step-panel-m">
+      <h4 style="color:var(--blue);margin-bottom:10px">Step 4: Save the Winner</h4>
+      <pre style="font-size:12px"><span class="cm">// optimized_qa.json (simplified)</span>
+{
+  "modules": {
+    "answer": {
+      "signature": {
+        "instruction": <span class="st">"Answer the question precisely and technically.
+                          Include equations when relevant. Cite all sources as [1]."</span>
+      },
+      "demos": [
+        {"question": "What is gradient descent?",
+         "answer": "Gradient descent minimizes f(&#952;) by updating &#952; &#8592; &#952; - &#945;&#x2207;f(&#952;)..."}
+      ]
+    }
+  }
+}</pre>
+      <div class="concept cg-m" style="margin-top:12px"><div class="concept-label cg-m">The Key Insight</div><p>This file is just text. Load it in milliseconds. No GPU, no model weights. The "compilation" happened once; now you reap the benefits forever.</p></div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 8</div>
+  <h2>How Few-Shot Learning Works</h2>
+</div>
+
+<div class="analogy">
+  <div class="analogy-emoji">&#128218;</div>
+  <div class="analogy-title">Showing Examples vs Giving Instructions</div>
+  <p>Imagine teaching someone to write in a specific style. You could write a 2-page instruction manual. <strong>Or</strong> you could just show them 3 examples. LLMs learn much faster from examples. This is called <em>few-shot learning</em>.</p>
+</div>
+
+<div class="widget">
+  <div class="widget-header">
+    <span class="widget-title">&#128640; Watch Few-Shot Improve Performance</span>
+    <div class="toggle-group">
+      <button class="tgl on" id="fs0" onclick="setFewShot(0)">Zero-shot</button>
+      <button class="tgl" id="fs1" onclick="setFewShot(1)">1-shot</button>
+      <button class="tgl" id="fs3" onclick="setFewShot(3)">3-shot</button>
+    </div>
+  </div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div style="background:var(--code);border-radius:8px;padding:16px;font-size:12.5px;line-height:1.8">
+      <span id="fs-examples"></span>
+      <span style="color:var(--yel)">Question: What is the ELBO in variational inference?<br>Answer:</span>
+    </div>
+    <div style="margin-top:12px;background:var(--s2);padding:14px;border-radius:8px">
+      <div style="font-size:12px;font-weight:700;color:var(--dim);margin-bottom:6px">LLM OUTPUT</div>
+      <div id="fs-output" style="font-size:13.5px"></div>
+    </div>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:13px;color:var(--dim)">Quality score:</span>
+      <div style="flex:1"><div class="score-track"><div id="fs-score" class="score-fill" style="width:30%"></div></div></div>
+      <span id="fs-score-txt" style="font-size:13px;color:var(--yel);font-weight:700">0.3</span>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Part 9</div>
+  <h2>Putting It All Together</h2>
+</div>
+
+<div class="flow">
+  <div class="fbox"><div style="font-size:20px;margin-bottom:4px">&#128203;</div><div style="font-size:11px;font-weight:700;color:var(--blue)">Signature</div><div style="font-size:10px;color:var(--dim)">Declare what<br>you want</div></div>
+  <div class="farr">+</div>
+  <div class="fbox"><div style="font-size:20px;margin-bottom:4px">&#9881;&#65039;</div><div style="font-size:11px;font-weight:700;color:var(--blue)">Module</div><div style="font-size:10px;color:var(--dim)">Choose<br>strategy</div></div>
+  <div class="farr">+</div>
+  <div class="fbox"><div style="font-size:20px;margin-bottom:4px">&#128202;</div><div style="font-size:11px;font-weight:700;color:var(--blue)">Training data</div><div style="font-size:10px;color:var(--dim)">20–200<br>examples</div></div>
+  <div class="farr">+</div>
+  <div class="fbox"><div style="font-size:20px;margin-bottom:4px">&#128207;</div><div style="font-size:11px;font-weight:700;color:var(--blue)">Metric</div><div style="font-size:10px;color:var(--dim)">Score<br>function</div></div>
+  <div class="farr">&#8594;</div>
+  <div class="fbox hi"><div style="font-size:20px;margin-bottom:4px">&#128295;</div><div style="font-size:11px;font-weight:700">Optimizer</div><div style="font-size:10px">compiles...</div></div>
+  <div class="farr">&#8594;</div>
+  <div class="fbox" style="border-color:var(--grn);background:var(--grn-d);color:var(--grn)"><div style="font-size:20px;margin-bottom:4px">&#10024;</div><div style="font-size:11px;font-weight:700">Compiled<br>Program</div><div style="font-size:10px">saved .json</div></div>
+</div>
+
+<div class="widget">
+  <div class="widget-header"><span class="widget-title">&#128200; Score Improves Over Compilation Iterations</span></div>
+  <div class="widget-body" style="padding:20px 18px">
+    <div id="iters-chart" style="display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:end;height:120px;margin-bottom:8px"></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim)"><span>Iteration 0 (start)</span><span>Iteration 9 (final)</span></div>
+    <div style="margin-top:8px;padding:10px;background:var(--s2);border-radius:8px;font-size:13px">Each iteration: try new candidate prompts → evaluate on validation set → keep best. Score improves monotonically.</div>
+  </div>
+</div>
+
+<hr>
+
+<div class="part">
+  <div class="part-label">Check Yourself</div>
+  <h2>Quick Questions</h2>
+</div>
+
+<div class="quiz-m">
+  <p><strong>Q1: What is "declarative" programming?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt-m" onclick="doq(this,false,'q1')">Writing every step of the instructions explicitly</button>
+    <button class="qopt-m" onclick="doq(this,true,'q1')">Specifying WHAT you want (inputs and outputs) without specifying HOW to get there</button>
+    <button class="qopt-m" onclick="doq(this,false,'q1')">A type of loop in programming</button>
+  </div>
+  <div id="qf-q1" class="qfb-m ok"><strong>Correct!</strong> Declarative = describe the goal. Imperative = describe the steps. DSPy is declarative: you say "I want (question, context) → answer" and DSPy figures out how to prompt the LLM.</div>
+</div>
+
+<div class="quiz-m">
+  <p><strong>Q2: In &#952;* = argmax &#x1D53C;[M(P_&#952;(x), y)], what does <em>M</em> represent?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt-m" onclick="doq(this,false,'q2')">The model (LLM) being used</button>
+    <button class="qopt-m" onclick="doq(this,false,'q2')">The module (Predict, ChainOfThought, etc.)</button>
+    <button class="qopt-m" onclick="doq(this,true,'q2')">The metric function — how you score the quality of a prediction</button>
+  </div>
+  <div id="qf-q2" class="qfb-m ok"><strong>Correct!</strong> M is your metric — the function that takes (prediction, expected_answer) and returns a score 0.0–1.0.</div>
+</div>
+
+<div class="quiz-m">
+  <p><strong>Q3: Why does Chain of Thought outperform direct Predict on reasoning tasks?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt-m" onclick="doq(this,false,'q3')">It uses a bigger and smarter LLM</button>
+    <button class="qopt-m" onclick="doq(this,true,'q3')">It breaks the problem into smaller steps — the LLM is good at "what's the next step?" but bad at "what's the final answer to a hard problem?"</button>
+    <button class="qopt-m" onclick="doq(this,false,'q3')">It searches through more possible answers</button>
+  </div>
+  <div id="qf-q3" class="qfb-m ok"><strong>Correct!</strong> CoT computes P(y|r,x)·P(r|x) summed over reasoning chains r. Each factor is easier to estimate than P(y|x) directly.</div>
+</div>
+
+<div class="next-b">
+  <div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:4px">Next up &#8594;</div>
+    <strong style="font-size:17px;color:var(--grn)">GEPA: The Evolution + Math</strong>
+    <p style="font-size:13.5px;color:var(--dim);margin-top:4px">How GEPA uses genetics + Pareto math to find better prompts 35x faster than RL.</p>
+  </div>
+  <a class="btn-n" href="gepa.html">GEPA &#8594;</a>
+</div>
+
+</div><!-- /lesson -->
+</div><!-- /tp-math -->
+
+<script>
+/* ─── TAB SWITCHING ─── */
+function showTab(name) {
+  document.querySelectorAll('#tp-guide,#tp-math').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.tbar-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tp-' + name).style.display = 'block';
+  document.querySelector('.tbar-btn[data-tab="' + name + '"]').classList.add('on');
+  if (name === 'math') { renderItersChart(); setFewShot(0); }
+  window.scrollTo(0, 0);
+}
+
+/* ─── PROGRESS BAR ─── */
+window.addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+  document.getElementById('top-prog').style.width = Math.min(pct, 100) + '%';
+});
+
+/* ─── GUIDE TAB: architecture diagram ─── */
+function selNode(id) {
+  const nodes = ['sig','mod','opt'];
+  const isActive = document.getElementById('dp-' + id).classList.contains('on');
+  nodes.forEach(n => {
+    document.getElementById('nd-' + n).classList.remove('sel');
+    document.getElementById('dp-' + n).classList.remove('on');
+  });
+  if (!isActive) {
+    document.getElementById('nd-' + id).classList.add('sel');
+    document.getElementById('dp-' + id).classList.add('on');
+  }
+}
+
+/* ─── GUIDE TAB: quiz ─── */
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    opts.forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+
+/* ─── MATH TAB: LLM demo ─── */
+const llmData = {
+  1: { input: '"The capital of France is"', output: '"Paris, known as the City of Light, has been the cultural centre of Europe for centuries..."' },
+  2: { input: '"You are a helpful assistant.\n\nUser: Summarize this paper in one sentence.\nPaper: [Attention Is All You Need, 2017...]\nAssistant:"',
+       output: '"The paper introduces the Transformer architecture, which relies entirely on self-attention mechanisms rather than recurrence, achieving state-of-the-art results on translation tasks."' }
+};
+let llmTyping;
+function setLLM(n) {
+  [1,2].forEach(i => document.getElementById('llm-btn'+i).classList.toggle('on', i===n));
+  const d = llmData[n];
+  document.getElementById('llm-input').textContent = d.input;
+  document.getElementById('llm-output').textContent = '';
+  clearInterval(llmTyping);
+  let i = 0;
+  llmTyping = setInterval(() => {
+    document.getElementById('llm-output').textContent = d.output.slice(0, ++i);
+    if (i >= d.output.length) clearInterval(llmTyping);
+  }, 18);
+}
+
+/* ─── MATH TAB: Declarative toggle ─── */
+function setDecl(n) {
+  [1,2].forEach(i => document.getElementById('d'+i).classList.toggle('on', i===n));
+  document.getElementById('decl-panel-1').style.display = n===1 ? 'block' : 'none';
+  const p2 = document.getElementById('decl-panel-2');
+  p2.style.display = n===2 ? 'block' : 'none';
+  p2.classList.toggle('on', n===2);
+}
+
+/* ─── MATH TAB: Signature anatomy ─── */
+const sigParts = {
+  class: 'The <code>class</code> keyword creates a new Signature definition. A class is like a blueprint.',
+  name: '<strong>WriteReview</strong> is the name of this Signature. Use descriptive names — they become part of the instruction.',
+  base: '<strong>dspy.Signature</strong> is the parent class. By inheriting from it, Python knows this is a DSPy Signature.',
+  doc: 'The text in quotes is the <strong>task description</strong> — the main instruction. The optimizer can improve this text.',
+  inp1: '<strong>paper_abstract</strong> is an <em>InputField</em> — data YOU provide. Type <code>str</code> means it\'s plain text.',
+  inp2: '<strong>venue</strong> is another InputField. You can have as many inputs as needed.',
+  desc: 'The <code>desc</code> parameter hints to the LLM what kind of content goes here.',
+  out1: '<strong>review</strong> is an <em>OutputField</em> — what you want the AI to produce.'
+};
+function showSigPart(id) {
+  document.getElementById('sig-explain').innerHTML = '<span style="color:var(--lav)">&#8594; ' + sigParts[id] + '</span>';
+}
+
+/* ─── MATH TAB: Module switcher ─── */
+function setModule(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('m'+i).classList.toggle('on', i===n);
+    const p = document.getElementById('mod-panel-'+i);
+    p.style.display = i===n ? 'block' : 'none';
+    if (i===n && i>1) p.classList.add('on');
+  });
+}
+
+/* ─── MATH TAB: Compilation steps ─── */
+function setStep(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById('sb'+i).classList.toggle('on', i===n);
+    document.getElementById('sp'+i).classList.toggle('on', i===n);
+  });
+  if (n===3) renderCandScores();
+}
+function renderCandScores() {
+  const cands = [
+    {name:'Instr A + Demo [1,2]', score:0.72},{name:'Instr A + Demo [2,5]', score:0.68},
+    {name:'Instr B + Demo [1,2]', score:0.91, best:true},{name:'Instr B + Demo [1,5]', score:0.85},
+    {name:'Instr C + Demo [2,7]', score:0.58},{name:'Instr C + Demo [1,2,5]', score:0.79},
+  ];
+  document.getElementById('cand-scores').innerHTML = cands.map(c => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:12px;color:${c.best?'var(--grn)':'var(--dim)'};width:180px;white-space:nowrap">${c.best?'&#9733; ':''}${c.name}</span>
+      <div style="flex:1;background:var(--s2);border-radius:4px;height:8px;overflow:hidden">
+        <div style="width:${c.score*100}%;height:100%;background:${c.best?'var(--grn)':'var(--blue)'};border-radius:4px"></div>
+      </div>
+      <span style="font-size:12px;color:${c.best?'var(--grn)':'var(--text)'};width:36px">${c.score.toFixed(2)}</span>
+    </div>`).join('');
+}
+
+/* ─── MATH TAB: Few-shot ─── */
+const fsData = {
+  0: { examples:'', output:'The ELBO is the evidence lower bound used in variational inference.', score:0.3, st:'0.30' },
+  1: { examples:`<span style="color:var(--lav)">Question: What is gradient descent?\nAnswer: Gradient descent minimizes f(&#952;) by updating &#952; &#8592; &#952; &#8722; &#945;&#x2207;f(&#952;).\n\n</span>`,
+       output:'The ELBO (Evidence Lower BOund) is: log p(x) &#8805; &#x1D53C;_q[log p(x,z)] &#8722; &#x1D53C;_q[log q(z)] = &#x1D53C;_q[log p(x|z)] &#8722; KL[q(z)||p(z)].', score:0.72, st:'0.72' },
+  3: { examples:`<span style="color:var(--lav)">Question: What is gradient descent?\nAnswer: &#952; &#8592; &#952; &#8722; &#945;&#x2207;f(&#952;).\n\nQuestion: What is KL divergence?\nAnswer: KL(P||Q) = &#x2211; P(x) log[P(x)/Q(x)]. Measures how P differs from Q.\n\nQuestion: What is a variational posterior?\nAnswer: q(z|x) approximates p(z|x) by minimizing KL divergence.\n\n</span>`,
+       output:'ELBO = &#x1D53C;_q(z|x)[log p(x,z) &#8722; log q(z|x)] = log p(x) &#8722; KL[q(z|x)||p(z|x)]. Maximizing ELBO &#8660; minimizing KL[q||p]. Reconstruction term + regularization term.', score:0.95, st:'0.95' }
+};
+function setFewShot(n) {
+  ['fs0','fs1','fs3'].forEach(id => document.getElementById(id).classList.toggle('on', id==='fs'+n));
+  const d = fsData[n];
+  document.getElementById('fs-examples').innerHTML = d.examples;
+  document.getElementById('fs-output').textContent = d.output;
+  document.getElementById('fs-score').style.width = (d.score*100)+'%';
+  document.getElementById('fs-score-txt').textContent = d.st;
+}
+
+/* ─── MATH TAB: Iterations chart ─── */
+function renderItersChart() {
+  const el = document.getElementById('iters-chart');
+  if (el.children.length > 0) return;
+  const scores = [0.41, 0.53, 0.61, 0.67, 0.74, 0.79, 0.84, 0.87, 0.90, 0.92];
+  scores.forEach((s, i) => {
+    const bar = document.createElement('div');
+    bar.style.cssText = `background:linear-gradient(180deg,var(--grn) 0%,var(--blue) 100%);border-radius:4px 4px 0 0;height:${s*100}%;position:relative`;
+    const label = document.createElement('div');
+    label.style.cssText = 'position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--dim);white-space:nowrap';
+    label.textContent = s.toFixed(2);
+    bar.appendChild(label);
+    el.appendChild(bar);
+  });
+}
+
+/* ─── MATH TAB: quiz ─── */
+function doq(btn, correct, qid) {
+  btn.parentElement.querySelectorAll('.qopt-m').forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    btn.parentElement.querySelectorAll('.qopt-m').forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+
+/* ─── INIT ─── */
+setLLM(1);
+setFewShot(0);
+</script>
+</body>
+</html>

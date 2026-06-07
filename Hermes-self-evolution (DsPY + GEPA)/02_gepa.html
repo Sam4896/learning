@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEPA &mdash; The Evolutionary Optimizer</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#111120;--surface2:#191928;--border:#252540;
+  --text:#c8d6ef;--dim:#6475a0;
+  --dspy:#5ba3f5;--dspy-d:rgba(91,163,245,.12);--dspy-b:rgba(91,163,245,.35);
+  --gepa:#f5a623;--gepa-d:rgba(245,166,35,.12);--gepa-b:rgba(245,166,35,.35);
+  --herm:#b06cf5;--herm-d:rgba(176,108,245,.12);--herm-b:rgba(176,108,245,.35);
+  --grn:#52e0a0;--grn-d:rgba(82,224,160,.12);--grn-b:rgba(82,224,160,.35);
+  --red:#f56b6b;--code:#0c0c18;--r:8px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.7;min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,15,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:6px}
+.nav-logo{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+.ntab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid transparent;transition:.2s;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.ntab:hover{background:var(--surface2);color:var(--text)}
+.ntab.cur{background:var(--gepa-d);color:var(--gepa);border-color:var(--gepa-b)}
+.ntab.d:hover{background:var(--dspy-d);color:var(--dspy)}
+.ntab.h:hover{background:var(--herm-d);color:var(--herm)}
+
+/* LAYOUT */
+.wrap{max-width:920px;margin:0 auto;padding:36px 22px}
+
+/* HERO */
+.hero{padding:64px 22px 44px;text-align:center;background:radial-gradient(ellipse at top,rgba(245,166,35,.1) 0%,transparent 60%)}
+.hero h1{font-size:clamp(26px,4.5vw,50px);font-weight:800;line-height:1.2;margin-bottom:14px}
+.hero p{font-size:17px;color:var(--dim);max-width:560px;margin:0 auto 24px}
+.pill{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--gepa-b);border-radius:20px;padding:7px 18px;font-size:12px;color:var(--dim)}
+.pill span{color:var(--border)}
+
+/* TYPE */
+h2{font-size:24px;font-weight:700;margin:0 0 14px}
+h3{font-size:18px;font-weight:600;margin:0 0 10px}
+h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+p{margin-bottom:12px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:20px;margin-bottom:10px}li{margin-bottom:4px}
+strong{font-weight:600;color:var(--text)}
+.tg{color:var(--gepa)}.td{color:var(--dspy)}.th{color:var(--herm)}.tn{color:var(--grn)}.tdim{color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:18px}
+.cg{border-left:3px solid var(--gepa)}.cd{border-left:3px solid var(--dspy)}.cn{border-left:3px solid var(--grn)}
+
+/* CODE */
+pre{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12.5px;line-height:1.65;margin:14px 0}
+code{background:rgba(245,166,35,.12);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--gepa)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#ff79c6}.st{color:#f1fa8c}.cm{color:#505080;font-style:italic}
+.fn{color:#50fa7b}.cl{color:#8be9fd}.nu{color:#bd93f9}.va{color:#ffb86c}
+
+/* CALLOUTS */
+.call{border-radius:var(--r);padding:14px 18px;margin:14px 0;border-left:4px solid}
+.ci{background:var(--dspy-d);border-color:var(--dspy)}.cw{background:var(--gepa-d);border-color:var(--gepa)}
+.ct{background:var(--grn-d);border-color:var(--grn)}.ca{background:var(--herm-d);border-color:var(--herm)}
+.call strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ci strong{color:var(--dspy)}.cw strong{color:var(--gepa)}.ct strong{color:var(--grn)}.ca strong{color:var(--herm)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{padding:9px 13px;text-align:left;background:var(--surface2);color:var(--dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.g2{grid-template-columns:1fr}}
+
+/* COMPARE */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cbad{border:1px solid rgba(245,107,107,.3);background:rgba(245,107,107,.06);border-radius:var(--r);padding:14px}
+.cgood{border:1px solid rgba(82,224,160,.3);background:rgba(82,224,160,.06);border-radius:var(--r);padding:14px}
+@media(max-width:620px){.cmp{grid-template-columns:1fr}}
+
+/* LOOP DIAGRAM */
+.loop-wrap{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:20px 0}
+.stages{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px}
+.stage{display:flex;flex-direction:column;align-items:center;padding:12px 14px;border-radius:var(--r);border:2px solid var(--border);cursor:pointer;transition:.25s;min-width:100px;text-align:center;background:var(--surface)}
+.stage:hover,.stage.on{border-color:var(--gepa);background:var(--gepa-d);transform:scale(1.04)}
+.sarr{color:var(--gepa);font-size:18px;padding:0 2px;display:flex;align-items:center}
+.sico{font-size:22px;margin-bottom:3px}
+.sname{font-weight:700;font-size:12px;color:var(--gepa)}
+.sdesc{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.4}
+.sdtl{display:none;margin-top:16px;padding:14px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--gepa-b);text-align:left;animation:sld .2s ease}
+.sdtl.on{display:block}
+@keyframes sld{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ADAPTERS */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:14px 0}
+.acard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:.2s}
+.acard:hover{border-color:var(--gepa);background:var(--gepa-d);transform:translateY(-2px)}
+.aico{font-size:26px;margin-bottom:6px}
+.aname{font-weight:700;font-size:13px}
+.astat{font-size:11px;color:var(--dim);margin-top:3px}
+
+/* STEPS */
+.steps{counter-reset:s}
+.step{counter-increment:s;position:relative;padding:13px 14px 13px 48px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{content:counter(s);position:absolute;left:14px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--gepa);color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+/* QUIZ */
+.qcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.qopt{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.2s;font-size:13.5px}
+.qopt:hover{border-color:var(--gepa);background:var(--gepa-d)}
+.qopt:disabled{cursor:default}
+.qopt.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt.wrong{border-color:var(--red);background:rgba(245,107,107,.1);color:var(--red)}
+.qfb{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb.on{display:block}.qfb.ok{background:var(--grn-d);border-color:var(--grn)}.qfb.bad{background:rgba(245,107,107,.1);border-color:var(--red)}
+
+/* NAV BANNERS */
+.nav-banners{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:48px}
+.prev-banner{padding:20px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--dspy-b);background:var(--dspy-d)}
+.next-banner{padding:20px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--herm-b);background:var(--herm-d)}
+.btn-prev{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:var(--r);background:var(--dspy);color:#0a0a14;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;transition:.2s}
+.btn-next{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:var(--r);background:var(--herm);color:#0a0a14;font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;transition:.2s}
+.btn-prev:hover,.btn-next:hover{opacity:.85}
+.nb-label{font-size:11px;color:var(--dim);margin-bottom:3px}
+.nb-title{font-weight:700;font-size:15px}
+@media(max-width:520px){.nav-banners{grid-template-columns:1fr}}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Interactive Guide &mdash; 2 of 3</span>
+  <a class="ntab d" href="01_dspy.html">&#9889; DSPy</a>
+  <a class="ntab cur" href="02_gepa.html">&#x1F9EC; GEPA</a>
+  <a class="ntab h" href="03_hermes.html">&#x1F40D; Hermes &amp; Big Picture</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1><span class="tg">GEPA</span> &mdash; The Evolutionary Optimizer</h1>
+  <p>GEPA uses an AI to read failure logs, understand <em>why</em> something went wrong, and propose a targeted fix. Then repeats. 35x cheaper than Reinforcement Learning.</p>
+  <div class="pill"><span>Genetic-Pareto algorithm</span><span>&#183;</span><span>No GPU</span><span>&#183;</span><span>Human-readable logs</span><span>&#183;</span><span>$2&ndash;10 per run</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- WHAT IS GEPA -->
+<h2>What Is GEPA?</h2>
+
+<p><strong>GEPA</strong> stands for <strong>Genetic-Pareto</strong>. It is a prompt and system optimizer introduced in the paper <em>"GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning"</em> (arXiv:2507.19457, ICLR 2026 Oral).</p>
+
+<p>It was released simultaneously as a standalone library (<code>pip install gepa</code>) and as a native DSPy optimizer (<code>dspy.GEPA</code>). The core idea: instead of optimizing a prompt by computing gradients or doing random search, you use an LLM to <em>read the failure trace</em>, diagnose the cause in natural language, and propose a targeted fix.</p>
+
+<div class="call ca">
+  <strong>Analogy</strong>
+  Imagine teaching someone to bake by only ever saying <strong>"that scored 0.4"</strong> after each attempt &mdash; that is Reinforcement Learning. GEPA instead says: <strong>"The sponge was too dense because you didn't fold the egg whites gently in step 3. Fix that."</strong> Now the learner knows exactly what to change.
+</div>
+
+<hr>
+
+<!-- RL vs GEPA -->
+<h2>Why Not Reinforcement Learning?</h2>
+
+<div class="cmp">
+  <div class="cbad">
+    <h4 style="color:var(--red)">Reinforcement Learning (RL)</h4>
+    <ul style="font-size:13.5px;color:var(--dim)">
+      <li>Returns a <strong>scalar reward</strong> only: "0.43"</li>
+      <li>Needs 5,000&ndash;25,000+ evaluations to converge</li>
+      <li>Requires GPU + direct model weight access</li>
+      <li>Cannot explain <em>why</em> something failed</li>
+      <li>Takes hours to days</li>
+      <li>Expensive infrastructure required</li>
+    </ul>
+  </div>
+  <div class="cgood">
+    <h4 style="color:var(--grn)">GEPA</h4>
+    <ul style="font-size:13.5px">
+      <li>Reads <strong>full execution traces</strong>: "step 3 failed because&hellip;"</li>
+      <li>Needs only 100&ndash;500 evaluations</li>
+      <li>API-only, no GPU required</li>
+      <li>Human-readable improvement logs</li>
+      <li>Takes minutes to a few hours</li>
+      <li>$2&ndash;10 total cost per optimization run</li>
+    </ul>
+  </div>
+</div>
+
+<div class="call ci">
+  <strong>The key difference</strong>
+  RL reduces a complex failure to a single number. GEPA preserves the full execution context &mdash; error messages, reasoning traces, intermediate outputs, tool call results &mdash; and passes all of it to a reflection LLM that understands <em>natural language</em>. Language is a richer optimization signal than a scalar.
+</div>
+
+<hr>
+
+<!-- THE LOOP -->
+<h2>The GEPA Optimization Loop</h2>
+<p>GEPA runs in repeated cycles. <strong>Click each stage</strong> to see exactly what happens inside:</p>
+
+<div class="loop-wrap">
+  <div class="stages">
+    <div class="stage on" id="st-eval" onclick="selStage('eval')">
+      <span class="sico">&#128202;</span>
+      <span class="sname">EVALUATE</span>
+      <span class="sdesc">Run prompts<br>on test cases</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-refl" onclick="selStage('refl')">
+      <span class="sico">&#128269;</span>
+      <span class="sname">REFLECT</span>
+      <span class="sdesc">AI reads traces,<br>diagnoses failures</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-muta" onclick="selStage('muta')">
+      <span class="sico">&#9998;&#65039;</span>
+      <span class="sname">MUTATE</span>
+      <span class="sdesc">AI proposes<br>targeted fixes</span>
+    </div>
+    <div class="sarr">&#8594;</div>
+    <div class="stage" id="st-sel" onclick="selStage('sel')">
+      <span class="sico">&#127942;</span>
+      <span class="sname">SELECT</span>
+      <span class="sdesc">Keep best on<br>Pareto front</span>
+    </div>
+    <span class="sarr" style="color:var(--dim);font-size:14px">&#8617; repeat</span>
+  </div>
+
+  <!-- Stage detail panels -->
+  <div id="sd-eval" class="sdtl on">
+    <h4 class="tg">&#128202; Evaluate &mdash; Capture Everything</h4>
+    <p>GEPA runs each candidate prompt on your test examples and captures three things per run &mdash; not just a score:</p>
+    <ul style="font-size:13.5px;color:var(--dim);margin-top:8px">
+      <li><strong style="color:var(--text)">Score (0.0&ndash;1.0)</strong> &mdash; how well the output matched expectations</li>
+      <li><strong style="color:var(--text)">Execution trace</strong> &mdash; every LLM call, tool invocation, reasoning step, and intermediate output</li>
+      <li><strong style="color:var(--text)">Feedback string</strong> &mdash; your natural-language description of what went right or wrong (see Feedback Function section)</li>
+    </ul>
+    <p style="font-size:13px;margin-top:10px;color:var(--dim)">This richness &mdash; especially the trace and feedback string &mdash; is what separates GEPA from RL, which only ever sees the scalar score.</p>
+  </div>
+
+  <div id="sd-refl" class="sdtl">
+    <h4 class="tg">&#128269; Reflect &mdash; Diagnose in Language</h4>
+    <p>A <strong>Reflection LLM</strong> (typically a powerful model like GPT-5 or Claude Opus) reads the execution traces from failed runs and produces a natural-language diagnosis:</p>
+    <pre style="font-size:12px;margin:10px 0"><code><span class="cm"># What GEPA sends to the Reflection LLM:</span>
+<span class="st">"""
+Candidate prompt: "Answer the question concisely."
+
+Test case: "What is gradient descent?"
+Expected:  Clear explanation with the update rule equation.
+Actual:    "Gradient descent finds the minimum of a function."
+Feedback:  "Too vague. Missing the update rule: theta -= lr * grad(L)"
+Trace:     [single direct call, no reasoning, no math]
+
+Why did this fail? What specifically needs to change?
+"""</span></code></pre>
+    <p style="font-size:13.5px;margin-top:8px">The reflection LLM responds in plain English: <em>"The prompt does not request mathematical detail. It needs to specify that technical answers should include the formal update rule and relevant notation."</em></p>
+    <p style="font-size:13px;margin-top:8px;color:var(--dim)">This diagnosis is then passed to the Mutate step as the guiding instruction for improvement.</p>
+  </div>
+
+  <div id="sd-muta" class="sdtl">
+    <h4 class="tg">&#9998;&#65039; Mutate &mdash; Targeted Fixes</h4>
+    <p>Based on the reflection diagnosis, GEPA generates <strong>N new prompt candidates</strong> that address the identified issue. These mutations are <em>semantic and targeted</em> &mdash; not random perturbations.</p>
+    <pre style="font-size:12px;margin:10px 0"><code><span class="cm"># The mutation step in action:</span>
+<span class="va">original</span>:   <span class="st">"Answer the question concisely."</span>
+
+<span class="cm"># Mutation 1: addresses the missing math requirement</span>
+<span class="va">mutation_1</span>: <span class="st">"Answer the question. For algorithm or math questions,
+             always include the formal update rule or equation."</span>
+
+<span class="cm"># Mutation 2: more explicit structure</span>
+<span class="va">mutation_2</span>: <span class="st">"Provide a precise technical answer structured as:
+             (1) intuitive explanation (2) mathematical formulation
+             using standard notation (3) when/why to use this."</span></code></pre>
+    <div style="margin-top:10px;padding:10px 12px;background:var(--surface);border-radius:6px;font-size:13px;color:var(--dim)">
+      <strong style="color:var(--gepa)">Evolutionary Memory:</strong> Each mutation also inherits lessons from all ancestral candidates in the search tree &mdash; improvements compound across generations rather than starting from scratch each time.
+    </div>
+  </div>
+
+  <div id="sd-sel" class="sdtl">
+    <h4 class="tg">&#127942; Select &mdash; The Pareto Front</h4>
+    <p>New candidates are evaluated, then added to the <strong>Pareto Front</strong> if they are "non-dominated." A candidate is non-dominated when no other candidate beats it on <em>all objectives simultaneously</em>.</p>
+    <p style="font-size:13.5px;margin-top:8px">Why Pareto and not just "pick the best score"? Because you often care about multiple objectives: quality <em>and</em> cost <em>and</em> latency. Pareto keeps all candidates that represent a valid trade-off point.</p>
+    <div style="margin-top:12px;text-align:center">
+      <svg viewBox="0 0 340 210" style="max-width:340px;border:1px solid var(--border);border-radius:6px">
+        <rect width="340" height="210" fill="#0c0c18"/>
+        <line x1="48" y1="172" x2="300" y2="172" stroke="#252540" stroke-width="1.5"/>
+        <line x1="48" y1="22" x2="48" y2="172" stroke="#252540" stroke-width="1.5"/>
+        <text x="174" y="193" text-anchor="middle" fill="#6475a0" font-size="11">API Cost (tokens) &#8594;</text>
+        <text x="18" y="100" text-anchor="middle" fill="#6475a0" font-size="11" transform="rotate(-90 18 100)">Quality &#8593;</text>
+        <polyline points="78,44 136,82 210,124" stroke="#f5a623" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+        <circle cx="78" cy="44" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="90" y="38" fill="#f5a623" font-size="9">Best quality</text>
+        <circle cx="136" cy="82" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="148" y="76" fill="#f5a623" font-size="9">Balanced</text>
+        <circle cx="210" cy="124" r="8" fill="#f5a623" opacity=".9"/>
+        <text x="222" y="118" fill="#f5a623" font-size="9">Cheapest</text>
+        <circle cx="172" cy="112" r="8" fill="#3a3a5a" opacity=".9"/>
+        <text x="182" y="106" fill="#6475a0" font-size="9">Dominated</text>
+        <text x="182" y="118" fill="#6475a0" font-size="9">(discarded)</text>
+        <text x="50" y="14" fill="#505080" font-size="9">Pareto-optimal candidates are all kept &rarr; choose your trade-off</text>
+      </svg>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin-top:10px">The dominated point (gray) is beaten by "Balanced" on <em>both</em> quality and cost simultaneously &mdash; so it is discarded. The three orange points each win on at least one dimension. You get a menu of trade-offs rather than a single forced choice.</p>
+  </div>
+</div>
+
+<hr>
+
+<!-- FEEDBACK FUNCTION -->
+<h2>The Feedback Function &mdash; Your Most Important Design Choice</h2>
+
+<div class="call cw">
+  <strong>The Golden Rule of GEPA</strong>
+  The richer and more specific your feedback string, the better the mutations GEPA proposes. A score of "0.6" produces vague mutations. A string like "citation format was wrong: expected [1] Smith (2024) but got (Smith, 2024)" produces a precise, surgical fix in the very next iteration.
+</div>
+
+<pre><code><span class="kw">def</span> <span class="fn">my_feedback_function</span>(gold, pred, trace=<span class="kw">None</span>) -&gt; <span class="cl">tuple</span>[<span class="cl">float</span>, <span class="cl">str</span>]:
+    <span class="st">"""
+    Returns: (score: float 0.0-1.0,  feedback: str)
+
+    'feedback' is natural language. It describes WHAT went wrong.
+    This is exactly what GEPA's Reflection LLM reads to propose
+    the next mutation. Be specific!
+    """</span>
+    score  = <span class="nu">0.0</span>
+    issues = []
+
+    <span class="cm"># ── Check 1: citation format ─────────────────────────────────</span>
+    <span class="kw">if</span> pred.<span class="fn">citation_format_correct</span>():
+        score += <span class="nu">0.5</span>
+    <span class="kw">else</span>:
+        issues.append(
+            <span class="st">f"Citation format wrong. Expected [1] Smith (2024), "</span>
+            <span class="st">f"got '{pred.citations[:40]}'. Use numbered Vancouver style."</span>
+        )
+
+    <span class="cm"># ── Check 2: word count in target range ──────────────────────</span>
+    wc = pred.<span class="fn">word_count</span>()
+    <span class="kw">if</span> <span class="nu">200</span> &lt;= wc &lt;= <span class="nu">300</span>:
+        score += <span class="nu">0.3</span>
+    <span class="kw">else</span>:
+        issues.append(<span class="st">f"Word count {wc} outside target 200-300 words."</span>)
+
+    <span class="cm"># ── Check 3: academic register (passive voice) ───────────────</span>
+    <span class="kw">if</span> pred.<span class="fn">passive_voice_ratio</span>() &gt; <span class="nu">0.6</span>:
+        score += <span class="nu">0.2</span>
+    <span class="kw">else</span>:
+        issues.append(<span class="st">"Should use passive voice throughout (academic register)."</span>)
+
+    <span class="cm"># This rich feedback string IS the key input to GEPA's Reflect step</span>
+    feedback = <span class="st">" | "</span>.join(issues) <span class="kw">if</span> issues <span class="kw">else</span> <span class="st">"All checks passed."</span>
+    <span class="kw">return</span> score, feedback</code></pre>
+
+<hr>
+
+<!-- TWO WAYS TO USE -->
+<h2>Two Ways to Use GEPA</h2>
+
+<div class="g2">
+  <div class="card cg">
+    <h3 class="tg">Option A &mdash; dspy.GEPA</h3>
+    <p style="font-size:13.5px;color:var(--dim)">Drop-in replacement for any DSPy optimizer. Best when you already use DSPy modules. Optimizes signatures, instructions, and few-shot examples all at once.</p>
+    <pre style="font-size:12px"><code><span class="cm"># Same API as MIPROv2 or BootstrapFewShot</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(
+    metric=my_feedback_fn,  <span class="cm"># returns (score, feedback_str)</span>
+    num_iterations=<span class="nu">10</span>,
+    population_size=<span class="nu">5</span>,
+    num_mutations=<span class="nu">3</span>,
+)
+compiled = optimizer.<span class="fn">compile</span>(
+    my_dspy_program,
+    trainset=data
+)
+compiled.<span class="fn">save</span>(<span class="st">"evolved.json"</span>)</code></pre>
+  </div>
+  <div class="card cg">
+    <h3 class="tg">Option B &mdash; Standalone gepa</h3>
+    <p style="font-size:13.5px;color:var(--dim)">Optimize <em>any</em> text parameter &mdash; system prompts, tool descriptions, config strings, non-DSPy pipelines. Maximum flexibility.</p>
+    <pre style="font-size:12px"><code><span class="kw">from</span> gepa <span class="kw">import</span> <span class="cl">GEPA</span>, <span class="cl">TextComponent</span>
+
+<span class="cm"># Define what you want to optimize</span>
+component = <span class="cl">TextComponent</span>(
+    text=<span class="st">"You are a helpful assistant."</span>,
+    name=<span class="st">"system_prompt"</span>
+)
+
+<span class="cm"># Run evolution</span>
+g = <span class="cl">GEPA</span>(components=[component], metric=my_fn)
+best = g.<span class="fn">run</span>(test_cases=[...])
+<span class="fn">print</span>(best.text)  <span class="cm"># the evolved system prompt</span></code></pre>
+  </div>
+</div>
+
+<hr>
+
+<!-- ADAPTERS -->
+<h2>Available Adapters &mdash; What GEPA Can Optimize</h2>
+<p>GEPA ships with ready-made adapters. <strong>Click an adapter</strong> to see details and a code example:</p>
+
+<div class="agrid">
+  <div class="acard" onclick="showAd('dspy')"><div class="aico">&#9889;</div><div class="aname">DSPy Programs</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('lc')"><div class="aico">&#128037;</div><div class="aname">LangChain</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('mcp')"><div class="aico">&#128295;</div><div class="aname">MCP Tools</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('rag')"><div class="aico">&#128218;</div><div class="aname">RAG Pipelines</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('term')"><div class="aico">&#128187;</div><div class="aname">Terminal Agents</div><div class="astat">&#10003; Stable</div></div>
+  <div class="acard" onclick="showAd('cc')"><div class="aico">&#129302;</div><div class="aname">Claude Code</div><div class="astat">via MCP adapter</div></div>
+</div>
+
+<div id="ad-detail" class="card cg" style="display:none">
+  <h4 id="ad-title" class="tg"></h4>
+  <p id="ad-body" style="font-size:13.5px;margin-bottom:10px"></p>
+  <pre id="ad-code" style="font-size:12px;margin:0"></pre>
+</div>
+
+<hr>
+
+<!-- STOP CONDITIONS -->
+<h2>When Does GEPA Stop?</h2>
+<p>GEPA is budget-based. You configure when it stops using composable <code>StopCondition</code> objects:</p>
+
+<pre><code><span class="kw">from</span> gepa <span class="kw">import</span> <span class="cl">GEPA</span>, <span class="cl">CompositeStopper</span>
+<span class="kw">from</span> gepa.stop <span class="kw">import</span> <span class="cl">MaxMetricCallsStopper</span>, <span class="cl">NoImprovementStopper</span>, <span class="cl">ScoreThresholdStopper</span>
+
+stopper = <span class="cl">CompositeStopper</span>([
+    <span class="cl">MaxMetricCallsStopper</span>(max_calls=<span class="nu">200</span>),     <span class="cm"># hard budget cap</span>
+    <span class="cl">NoImprovementStopper</span>(patience=<span class="nu">3</span>),         <span class="cm"># stop if 3 iters with no gain</span>
+    <span class="cl">ScoreThresholdStopper</span>(threshold=<span class="nu">0.95</span>),    <span class="cm"># stop if target quality reached</span>
+])
+
+<span class="cm"># Other available stoppers:</span>
+<span class="cm"># TimeoutStopCondition(seconds=3600)  &larr; wall-clock limit</span>
+<span class="cm"># FileStopper("stop.flag")            &larr; touch a file to stop manually</span>
+<span class="cm"># SignalStopper(signal.SIGTERM)       &larr; OS signal</span></code></pre>
+
+<hr>
+
+<!-- KEY CLASSES REFERENCE -->
+<h2>Key Classes at a Glance</h2>
+
+<table>
+  <tr><th>Class</th><th>What It Does</th></tr>
+  <tr><td><code>GEPAConfig</code></td><td>Main configuration: iterations, population size, mutation count, model names</td></tr>
+  <tr><td><code>ReflectionConfig</code></td><td>Settings for the reflection LLM (model, temperature, max tokens)</td></tr>
+  <tr><td><code>Evaluator</code></td><td>Wraps your evaluation function and manages caching of results</td></tr>
+  <tr><td><code>EvaluationBatch</code></td><td>Batch results: contains outputs, scores, and execution traces</td></tr>
+  <tr><td><code>EvaluationCache</code></td><td>Avoids re-evaluating the same candidate twice</td></tr>
+  <tr><td><code>ParetoCandidateSelector</code></td><td>Selects the next candidate to mutate from the Pareto front</td></tr>
+  <tr><td><code>ReflectiveMutationProposer</code></td><td>The reflection+mutation engine: reads traces, generates new candidates</td></tr>
+  <tr><td><code>GEPAResult</code></td><td>Final output: the Pareto-optimal candidates + full optimization history</td></tr>
+  <tr><td><code>OptimizationState</code></td><td>Intermediate state &mdash; save and resume runs mid-way</td></tr>
+</table>
+
+<hr>
+
+<!-- BENCHMARKS -->
+<h2>What GEPA Achieves in Practice</h2>
+
+<table>
+  <tr><th>Task</th><th>Before</th><th>After GEPA</th><th>Notes</th></tr>
+  <tr><td>AIME 2025 math olympiad</td><td>~23% accuracy</td><td class="tg" style="font-weight:600">+10% absolute</td><td>GPT-4.1 Mini, single ChainOfThought</td></tr>
+  <tr><td>ARC-AGI agent</td><td>32% accuracy</td><td class="tg" style="font-weight:600">89% accuracy</td><td>Architecture itself discovered by GEPA</td></tr>
+  <tr><td>Cloud cost scheduling</td><td>Expert heuristics baseline</td><td class="tg" style="font-weight:600">40.2% cost savings</td><td>Non-LLM system (scheduling policy text)</td></tr>
+  <tr><td>Code backdoor detection</td><td>67% (basic CoT)</td><td class="tg" style="font-weight:600">93%</td><td>DSPy Full Program adapter</td></tr>
+  <tr><td>vs GRPO (RL) efficiency</td><td>5,000&ndash;25,000 evals</td><td class="tg" style="font-weight:600">100&ndash;500 evals</td><td><strong>35x more sample-efficient</strong></td></tr>
+  <tr><td>Cost vs Claude Opus 4.1</td><td>Premium model required</td><td class="tg" style="font-weight:600">Open-source, 90x cheaper</td><td>Same quality after prompt evolution</td></tr>
+</table>
+
+<div class="call ct">
+  <strong>The 90x cost reduction explained</strong>
+  Once GEPA finds the prompt phrasing that reliably elicits good responses, you can swap to a much cheaper model and maintain quality. The expensive model was needed because the original prompts were under-specified &mdash; the evolved prompts remove that ambiguity.
+</div>
+
+<hr>
+
+<!-- QUIZ -->
+<h2>Check Your Understanding</h2>
+
+<div class="qcard">
+  <p><strong>Q: GEPA is 35x more sample-efficient than RL. What is the core reason?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'g1')">It parallelizes evaluations across many GPUs</button>
+    <button class="qopt" onclick="qa(this,false,'g1')">It uses smarter random mutation heuristics</button>
+    <button class="qopt" onclick="qa(this,true,'g1')">It passes full execution traces to a reflection LLM, enabling targeted mutations instead of random search</button>
+    <button class="qopt" onclick="qa(this,false,'g1')">It uses a larger and more diverse training dataset</button>
+  </div>
+  <div id="qf-g1" class="qfb ok"><strong>Exactly right!</strong> Language is the learning signal. RL says "score = 0.4." GEPA says "step 3 failed because the citation format was wrong &mdash; expected [1] but got (Smith, 2024)." That specificity lets GEPA propose a precise fix in 1&ndash;3 iterations that RL would need hundreds of random tries to stumble upon.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: A Pareto front keeps candidates that are "non-dominated." What does that mean?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'g2')">The candidates with the highest score on the primary metric</button>
+    <button class="qopt" onclick="qa(this,false,'g2')">The cheapest candidates to evaluate</button>
+    <button class="qopt" onclick="qa(this,true,'g2')">Candidates where no other candidate beats them on ALL objectives at the same time</button>
+    <button class="qopt" onclick="qa(this,false,'g2')">The candidates selected by random sampling</button>
+  </div>
+  <div id="qf-g2" class="qfb ok"><strong>Correct!</strong> A candidate is dominated only if another candidate is better on <em>every single objective simultaneously</em>. Non-dominated candidates all represent valid trade-off points &mdash; you get a menu of options instead of being forced to collapse to one answer. This is especially useful when balancing quality against API cost.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: Your feedback function returns (0.7, "Word count 400 is too long, target is 200-300"). How does GEPA use the string "Word count 400 is too long..."?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'g3')">It is ignored; only the 0.7 score matters</button>
+    <button class="qopt" onclick="qa(this,false,'g3')">It is logged for human inspection but not used in optimization</button>
+    <button class="qopt" onclick="qa(this,true,'g3')">It is passed to the Reflection LLM, which uses it to diagnose the failure and propose a shorter-output mutation</button>
+    <button class="qopt" onclick="qa(this,false,'g3')">It is used to compute a gradient for back-propagation</button>
+  </div>
+  <div id="qf-g3" class="qfb ok"><strong>Correct!</strong> The feedback string is the primary input to the Reflect step. The reflection LLM reads it, understands the specific failure (word count too high), and proposes a mutation like "Add 'Answer in 200-300 words' to the instruction." The score alone would give no information about <em>what</em> needs to change.</div>
+</div>
+
+<!-- NAVIGATION BANNERS -->
+<div class="nav-banners">
+  <div class="prev-banner">
+    <div><span class="nb-label">&#8592; Previous</span><span class="nb-title td">DSPy &mdash; The AI Compiler</span></div>
+    <a class="btn-prev" href="01_dspy.html">&#8592; DSPy</a>
+  </div>
+  <div class="next-banner">
+    <div><span class="nb-label">Next &#8594;</span><span class="nb-title th">Hermes &amp; Big Picture</span></div>
+    <a class="btn-next" href="03_hermes.html">Hermes &#8594;</a>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function selStage(id) {
+  const stages = ['eval','refl','muta','sel'];
+  const isActive = document.getElementById('st-' + id).classList.contains('on');
+  stages.forEach(s => {
+    document.getElementById('st-' + s).classList.remove('on');
+    document.getElementById('sd-' + s).classList.remove('on');
+  });
+  if (!isActive) {
+    document.getElementById('st-' + id).classList.add('on');
+    document.getElementById('sd-' + id).classList.add('on');
+  }
+}
+
+const adInfo = {
+  dspy:{title:'DSPy Full Program Adapter',
+    body:'Optimizes entire DSPy programs: signature instructions, few-shot demos, and module-level prompting strategies simultaneously. Best for complex multi-step pipelines.',
+    code:'optimizer = dspy.GEPA(metric=feedback_fn, num_iterations=10)\ncompiled = optimizer.compile(my_program, trainset=data)\ncompiled.save("evolved.json")'},
+  lc:{title:'LangChain Adapter',
+    body:'Optimizes any LangChain pipeline: simple chains, multi-agent systems, LangGraph graphs. The prompt at each node becomes an optimization target. Works with LCEL and legacy chain APIs.',
+    code:'from gepa.adapters.langchain import LangChainAdapter\nadapter = LangChainAdapter(chain=my_chain, feedback_fn=fn)\nbest = adapter.run(test_cases=data, num_iterations=10)'},
+  mcp:{title:'MCP Tool Adapter',
+    body:'Optimizes the description string of each MCP tool. A richer, more precise description means Claude calls tools more accurately with better arguments. Most relevant for Claude Code and Cursor users.',
+    code:'from gepa.adapters.mcp import MCPAdapter\nadapter = MCPAdapter(\n    server_config={"type":"stdio","command":"my-server"},\n    tools_to_optimize=["search","edit","run"],\n    feedback_fn=fn\n)\nevolved = adapter.run(num_iterations=10)'},
+  rag:{title:'RAG Pipeline Adapter',
+    body:'Optimizes all text parameters in a RAG pipeline: query reformulation, context synthesis, answer generation instructions, and document reranking criteria.',
+    code:'from gepa.adapters.rag import RAGAdapter\nadapter = RAGAdapter(\n    retriever=my_retriever,\n    generator=my_generator,\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'},
+  term:{title:'Terminal / TerminalBench Adapter',
+    body:'Optimizes external agentic pipelines that run as subprocess commands. Works with any agent in a terminal, not just Python-based systems. The agent\'s system prompt or config is the target.',
+    code:'from gepa.adapters.terminal import TerminalAdapter\nadapter = TerminalAdapter(\n    command=["python","agent.py","--config","{config}"],\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'},
+  cc:{title:'Claude Code Integration',
+    body:'Use the MCP adapter to evolve your Claude Code tool descriptions. Or use standalone GEPA with TextComponent to optimize your CLAUDE.md skill files, reading ~/.claude/history.jsonl as your training data.',
+    code:'# Optimize a Claude Code skill file directly\nfrom gepa import GEPA, TextComponent\ncomponent = TextComponent(\n    text=open("~/.claude/skills/my-skill.md").read(),\n    name="skill_prompt"\n)\ng = GEPA(components=[component], metric=my_eval_fn)\nbest = g.run(test_cases=your_examples)'}
+};
+
+function showAd(id) {
+  const info = adInfo[id];
+  document.getElementById('ad-title').textContent = info.title;
+  document.getElementById('ad-body').textContent = info.body;
+  document.getElementById('ad-code').textContent = info.code;
+  const box = document.getElementById('ad-detail');
+  box.style.display = 'block';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    opts.forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+
+// Init: first stage active
+document.getElementById('st-eval').classList.add('on');
+document.getElementById('sd-eval').classList.add('on');
+</script>
+</body>
+</html>

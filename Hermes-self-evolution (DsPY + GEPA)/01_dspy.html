@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSPy &mdash; The AI Compiler</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#111120;--surface2:#191928;--border:#252540;
+  --text:#c8d6ef;--dim:#6475a0;
+  --dspy:#5ba3f5;--dspy-d:rgba(91,163,245,.12);--dspy-b:rgba(91,163,245,.35);
+  --gepa:#f5a623;--gepa-d:rgba(245,166,35,.12);--gepa-b:rgba(245,166,35,.35);
+  --herm:#b06cf5;--herm-d:rgba(176,108,245,.12);--herm-b:rgba(176,108,245,.35);
+  --grn:#52e0a0;--grn-d:rgba(82,224,160,.12);--grn-b:rgba(82,224,160,.35);
+  --red:#f56b6b;--code:#0c0c18;--r:8px;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.7;min-height:100vh}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,15,.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 20px;gap:6px}
+.nav-logo{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:.06em;margin-right:auto;white-space:nowrap}
+.ntab{padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid transparent;transition:.2s;color:var(--dim);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.ntab:hover{background:var(--surface2);color:var(--text)}
+.ntab.cur{background:var(--dspy-d);color:var(--dspy);border-color:var(--dspy-b)}
+.ntab.g:hover{background:var(--gepa-d);color:var(--gepa)}
+.ntab.h:hover{background:var(--herm-d);color:var(--herm)}
+
+/* LAYOUT */
+.wrap{max-width:920px;margin:0 auto;padding:36px 22px}
+
+/* HERO */
+.hero{padding:64px 22px 44px;text-align:center;background:radial-gradient(ellipse at top,rgba(91,163,245,.1) 0%,transparent 60%)}
+.hero h1{font-size:clamp(26px,4.5vw,50px);font-weight:800;line-height:1.2;margin-bottom:14px}
+.hero p{font-size:17px;color:var(--dim);max-width:540px;margin:0 auto 24px}
+.pill{display:inline-flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 18px;font-size:12px;color:var(--dim)}
+.pill span{color:var(--border)}
+
+/* TYPE */
+h2{font-size:24px;font-weight:700;margin:0 0 14px}
+h3{font-size:18px;font-weight:600;margin:0 0 10px}
+h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin:0 0 8px}
+p{margin-bottom:12px}p:last-child{margin-bottom:0}
+ul,ol{padding-left:20px;margin-bottom:10px}li{margin-bottom:4px}
+strong{font-weight:600;color:var(--text)}
+.td{color:var(--dspy)}.tg{color:var(--gepa)}.th{color:var(--herm)}.tn{color:var(--grn)}.tdim{color:var(--dim)}
+hr{border:none;border-top:1px solid var(--border);margin:36px 0}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:18px}
+.cd{border-left:3px solid var(--dspy)}.cn{border-left:3px solid var(--grn)}
+
+/* CODE */
+pre{background:var(--code);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow-x:auto;font-family:'JetBrains Mono','Fira Code',Consolas,monospace;font-size:12.5px;line-height:1.65;margin:14px 0}
+code{background:rgba(91,163,245,.12);border-radius:3px;padding:2px 5px;font-family:'JetBrains Mono',monospace;font-size:.85em;color:var(--dspy)}
+pre code{background:none;padding:0;color:inherit}
+.kw{color:#ff79c6}.st{color:#f1fa8c}.cm{color:#505080;font-style:italic}
+.fn{color:#50fa7b}.cl{color:#8be9fd}.nu{color:#bd93f9}.va{color:#ffb86c}
+
+/* CALLOUTS */
+.call{border-radius:var(--r);padding:14px 18px;margin:14px 0;border-left:4px solid}
+.ci{background:var(--dspy-d);border-color:var(--dspy)}.cw{background:var(--gepa-d);border-color:var(--gepa)}
+.ct{background:var(--grn-d);border-color:var(--grn)}.ca{background:var(--herm-d);border-color:var(--herm)}
+.call strong{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ci strong{color:var(--dspy)}.cw strong{color:var(--gepa)}.ct strong{color:var(--grn)}.ca strong{color:var(--herm)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{padding:9px 13px;text-align:left;background:var(--surface2);color:var(--dim);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.g2{grid-template-columns:1fr}}
+
+/* COMPARE */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.cbad{border:1px solid rgba(245,107,107,.3);background:rgba(245,107,107,.06);border-radius:var(--r);padding:14px}
+.cgood{border:1px solid rgba(82,224,160,.3);background:rgba(82,224,160,.06);border-radius:var(--r);padding:14px}
+@media(max-width:620px){.cmp{grid-template-columns:1fr}}
+
+/* ARCH DIAGRAM */
+.arch-wrap{background:var(--code);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:20px 0}
+.arch-wrap svg{display:block;width:100%;max-height:180px}
+.node-btn{cursor:pointer}
+.node-btn rect{transition:fill .2s,stroke .2s}
+.node-btn:hover rect,.node-btn.sel rect{stroke:var(--dspy)!important;fill:#1c2035!important}
+.dpanel{display:none;padding:18px;border-top:1px solid var(--border);background:var(--surface2);animation:sld .2s ease}
+.dpanel.on{display:block}
+@keyframes sld{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* STEPS */
+.steps{counter-reset:s}
+.step{counter-increment:s;position:relative;padding:13px 14px 13px 48px;margin-bottom:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r)}
+.step::before{content:counter(s);position:absolute;left:14px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--dspy);color:var(--bg);font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center}
+
+/* QUIZ */
+.qcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.qopt{display:block;width:100%;text-align:left;padding:9px 14px;margin-bottom:7px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:.2s;font-size:13.5px}
+.qopt:hover{border-color:var(--dspy);background:var(--dspy-d)}
+.qopt:disabled{cursor:default}
+.qopt.right{border-color:var(--grn);background:var(--grn-d);color:var(--grn)}
+.qopt.wrong{border-color:var(--red);background:rgba(245,107,107,.1);color:var(--red)}
+.qfb{display:none;margin-top:10px;padding:11px 14px;border-radius:6px;font-size:13.5px;border-left:4px solid}
+.qfb.on{display:block}.qfb.ok{background:var(--grn-d);border-color:var(--grn)}.qfb.bad{background:rgba(245,107,107,.1);border-color:var(--red)}
+
+/* NEXT PAGE BANNER */
+.next-banner{margin-top:48px;padding:24px;border-radius:var(--r);display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--gepa-b);background:var(--gepa-d)}
+.next-banner p{margin:0;font-size:14px;color:var(--dim)}
+.next-banner strong{display:block;font-size:17px;color:var(--gepa);margin-bottom:4px}
+.btn-next{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--r);background:var(--gepa);color:#0a0a14;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap;transition:.2s}
+.btn-next:hover{opacity:.85}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Interactive Guide &mdash; 1 of 3</span>
+  <a class="ntab cur" href="01_dspy.html">&#9889; DSPy</a>
+  <a class="ntab g" href="02_gepa.html">&#x1F9EC; GEPA</a>
+  <a class="ntab h" href="03_hermes.html">&#x1F40D; Hermes &amp; Big Picture</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1><span class="td">DSPy</span> &mdash; The AI Compiler</h1>
+  <p>Stop writing prompts by hand. DSPy lets you <em>declare</em> what you want from an AI and <em>automatically finds</em> the best prompt to get it.</p>
+  <div class="pill"><span>Python library</span><span>&#183;</span><span>Works with Claude, GPT, Gemini</span><span>&#183;</span><span>No GPU needed</span></div>
+</div>
+
+<div class="wrap">
+
+<!-- PROBLEM -->
+<h2>The Problem DSPy Solves</h2>
+
+<div class="call ca">
+  <strong>Analogy first</strong>
+  Imagine writing a web application where you had to manually write every CPU instruction. That would be insane &mdash; you use a compiler. Building LLM apps without DSPy is the same: you are manually "compiling" prompts by hand, and every time you change the AI model, they break.
+</div>
+
+<div class="cmp">
+  <div class="cbad">
+    <h4 style="color:var(--red)">Without DSPy &mdash; Hand-Written Prompts</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="st">"You are an expert researcher.
+Given this question: {question}
+And context: {context}
+Answer precisely. Use Vancouver
+citations. Max 300 words. Do
+not use first person. Always..."</span></code></pre>
+    <p style="font-size:13px;color:var(--dim)">Fragile. Hard-coded. Breaks when you switch models. Impossible to optimize systematically. Grows unmanageable.</p>
+  </div>
+  <div class="cgood">
+    <h4 style="color:var(--grn)">With DSPy &mdash; Declarative</h4>
+    <pre style="font-size:11.5px;margin:8px 0"><code><span class="kw">class</span> <span class="cl">Answer</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question
+    with source citations."""</span>
+    question: <span class="cl">str</span> = <span class="cl">InputField</span>()
+    context:  <span class="cl">str</span> = <span class="cl">InputField</span>()
+    answer:   <span class="cl">str</span> = <span class="cl">OutputField</span>()</code></pre>
+    <p style="font-size:13px;color:var(--dim)">Declarative. Model-agnostic. The actual prompt text is generated and optimized automatically by DSPy.</p>
+  </div>
+</div>
+
+<div class="call ci">
+  <strong>The PyTorch Analogy (from the original Stanford paper)</strong>
+  In PyTorch, you write a forward pass in Python and the framework figures out the backward pass. In DSPy, you write a pipeline in Python and the framework figures out the prompts. Same principle: you specify the structure; the system finds the parameters.
+</div>
+
+<hr>
+
+<!-- THREE ABSTRACTIONS -->
+<h2>The Three Core Abstractions</h2>
+<p>Every DSPy program is built from exactly three things. <strong>Click each block</strong> to expand a detailed explanation:</p>
+
+<div class="arch-wrap">
+  <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+    <g class="node-btn" id="nd-sig" onclick="selNode('sig')">
+      <rect x="28" y="28" width="168" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="112" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128203;</text>
+      <text x="112" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Signature</text>
+      <text x="112" y="108" text-anchor="middle" font-size="11" fill="#6475a0">WHAT to do</text>
+      <text x="112" y="124" text-anchor="middle" font-size="11" fill="#6475a0">inputs &#8594; outputs</text>
+    </g>
+    <line x1="197" y1="80" x2="252" y2="80" stroke="#252540" stroke-width="2"/>
+    <polygon points="252,75 264,80 252,85" fill="#252540"/>
+    <text x="230" y="73" text-anchor="middle" font-size="10" fill="#404065">used by</text>
+    <g class="node-btn" id="nd-mod" onclick="selNode('mod')">
+      <rect x="264" y="28" width="168" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="348" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#9881;&#65039;</text>
+      <text x="348" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Module</text>
+      <text x="348" y="108" text-anchor="middle" font-size="11" fill="#6475a0">HOW to do it</text>
+      <text x="348" y="124" text-anchor="middle" font-size="11" fill="#6475a0">execution strategy</text>
+    </g>
+    <line x1="433" y1="80" x2="488" y2="80" stroke="#252540" stroke-width="2"/>
+    <polygon points="488,75 500,80 488,85" fill="#252540"/>
+    <text x="466" y="73" text-anchor="middle" font-size="10" fill="#404065">compiled by</text>
+    <g class="node-btn" id="nd-opt" onclick="selNode('opt')">
+      <rect x="500" y="28" width="172" height="104" rx="8" fill="#111120" stroke="#252540" stroke-width="1.5"/>
+      <text x="586" y="64" text-anchor="middle" font-size="24" fill="#5ba3f5">&#128295;</text>
+      <text x="586" y="89" text-anchor="middle" font-size="14" font-weight="700" fill="#5ba3f5">Optimizer</text>
+      <text x="586" y="108" text-anchor="middle" font-size="11" fill="#6475a0">HOW GOOD + improve</text>
+      <text x="586" y="124" text-anchor="middle" font-size="11" fill="#6475a0">auto-tune prompts</text>
+    </g>
+  </svg>
+
+  <div id="dp-sig" class="dpanel">
+    <h3 class="td">&#128203; Signature &mdash; The Contract</h3>
+    <p>A Signature declares <strong>what inputs go in</strong> and <strong>what outputs should come out</strong> of an LLM call &mdash; without specifying <em>how</em> to get there. Think of it as a typed function signature, but for AI tasks.</p>
+    <div class="g2" style="margin-top:14px">
+      <div>
+        <h4>String form (quickest to write)</h4>
+        <pre><code><span class="cm"># Minimal: "inputs -> outputs"</span>
+qa = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"question -> answer"</span>)
+result = qa(question=<span class="st">"What is DSPy?"</span>)
+<span class="fn">print</span>(result.answer)
+
+<span class="cm"># With type annotation</span>
+clf = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"text -> label: bool"</span>)</code></pre>
+      </div>
+      <div>
+        <h4>Class form (full control)</h4>
+        <pre><code><span class="kw">class</span> <span class="cl">SummarizeCode</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Summarize what this code does
+    in plain English."""</span>
+    code: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>()
+    summary: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(
+        desc=<span class="st">"2-3 sentence summary"</span>
+    )</code></pre>
+      </div>
+    </div>
+    <div class="call ct" style="margin-top:10px">
+      <strong>How the optimizer sees it</strong>
+      The class docstring becomes the task instruction given to the LLM. The <code>desc</code> on each field guides what the LLM puts there. The optimizer can <em>rewrite both</em> &mdash; that is how it improves prompts. Every tunable part is accessible.
+    </div>
+    <p style="font-size:13.5px;margin-top:10px;color:var(--dim)">Internally, a Signature is a Pydantic <code>BaseModel</code>. The optimizer has structured read/write access to the instruction text and all field descriptions.</p>
+  </div>
+
+  <div id="dp-mod" class="dpanel">
+    <h3 class="td">&#9881;&#65039; Module &mdash; The Strategy</h3>
+    <p>A Module wraps a Signature and adds a <strong>prompting strategy</strong>. Two modules can share the exact same Signature but prompt the LLM in completely different ways. The Signature is the <em>what</em>; the Module is the <em>how</em>.</p>
+    <table style="margin-top:12px">
+      <tr><th>Module</th><th>Strategy</th><th>Use when&hellip;</th></tr>
+      <tr><td><code>Predict</code></td><td>Direct answer, no extras</td><td>Simple fast tasks, classification</td></tr>
+      <tr><td><code>ChainOfThought</code></td><td>Reason step-by-step, then answer</td><td>Any reasoning or multi-hop problem</td></tr>
+      <tr><td><code>ReAct</code></td><td>Reason + call tools in a loop</td><td>Agentic tasks requiring tool use</td></tr>
+      <tr><td><code>ProgramOfThought</code></td><td>Write &amp; execute Python code</td><td>Math, computation, data analysis</td></tr>
+      <tr><td><code>MultiChainComparison</code></td><td>Generate N candidate answers, compare</td><td>High-stakes decisions</td></tr>
+      <tr><td><code>Retry</code></td><td>Re-call with error feedback if assertion fails</td><td>When output must satisfy constraints</td></tr>
+    </table>
+    <div class="call ci" style="margin-top:10px">
+      <strong>Same contract, different strategy</strong>
+      You can swap <code>Predict</code> for <code>ChainOfThought</code> at any time without touching the Signature. The "what" is stable; only the "how" changes. This separation is what makes DSPy programs easy to improve incrementally.
+    </div>
+    <pre style="margin-top:12px"><code><span class="cm"># Same Signature, three different strategies:</span>
+direct  = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"question -> answer"</span>)
+thinker = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"question -> answer"</span>)
+agent   = <span class="cl">dspy</span>.<span class="fn">ReAct</span>(<span class="st">"question -> answer"</span>, tools=[search_web])</code></pre>
+  </div>
+
+  <div id="dp-opt" class="dpanel">
+    <h3 class="td">&#128295; Optimizer &mdash; The Compiler</h3>
+    <p>The Optimizer takes your program + training examples + a scoring function and <strong>automatically finds better prompts</strong>. No gradients, no GPU &mdash; pure discrete text search.</p>
+    <div class="steps" style="margin-top:12px">
+      <div class="step"><strong>Bootstrap</strong> &mdash; Run your unoptimized program on training examples. Record every LLM call, every input, every output (the "trace").</div>
+      <div class="step"><strong>Generate Candidates</strong> &mdash; Extract successful traces as few-shot examples. Ask a separate LLM to propose improved instruction variants for the docstring.</div>
+      <div class="step"><strong>Evaluate</strong> &mdash; Test each instruction+demo combination on a held-out validation set. Score with your metric function (returns 0.0&ndash;1.0).</div>
+      <div class="step"><strong>Save Winner</strong> &mdash; Serialize the best combination as a <code>.json</code> file. Load it later in milliseconds &mdash; no re-optimization ever needed again.</div>
+    </div>
+    <div class="call ct" style="margin-top:8px">
+      <strong>The compiled .json is just text</strong>
+      It contains the winning instruction string and winning few-shot examples. No model weights, no GPU. Extract the text and use it anywhere &mdash; even outside DSPy.
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- FULL CODE EXAMPLE -->
+<h2>Building Your First DSPy Program</h2>
+<p>A complete end-to-end example with every step annotated:</p>
+
+<pre><code><span class="kw">import</span> dspy
+
+<span class="cm"># ── Step 1: Connect to an LLM ─────────────────────────────────────────</span>
+lm = <span class="cl">dspy</span>.<span class="fn">LM</span>(<span class="st">"anthropic/claude-sonnet-4-20250514"</span>)
+<span class="cl">dspy</span>.<span class="fn">configure</span>(lm=lm)
+<span class="cm"># DSPy also supports: "openai/gpt-4o", "google/gemini-pro", any litellm model</span>
+
+<span class="cm"># ── Step 2: Declare WHAT you want (Signature) ─────────────────────────</span>
+<span class="kw">class</span> <span class="cl">AnswerWithReasoning</span>(<span class="cl">dspy.Signature</span>):
+    <span class="st">"""Answer the question based on the context.
+    Cite sources using [1], [2] notation."""</span>
+    question: <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"The user's question"</span>)
+    context:  <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">InputField</span>(desc=<span class="st">"Background information"</span>)
+    answer:   <span class="cl">str</span> = <span class="cl">dspy</span>.<span class="fn">OutputField</span>(desc=<span class="st">"Precise answer with inline citations"</span>)
+
+<span class="cm"># ── Step 3: Define HOW to execute (Module) ────────────────────────────</span>
+<span class="kw">class</span> <span class="cl">SmartQA</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="cm"># ChainOfThought adds a hidden "rationale" reasoning step</span>
+        <span class="va">self</span>.answer = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="cl">AnswerWithReasoning</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, question, context):
+        <span class="kw">return</span> <span class="va">self</span>.answer(question=question, context=context)
+
+<span class="cm"># ── Step 4: Run it immediately (no optimization required to just run) ──</span>
+qa = <span class="cl">SmartQA</span>()
+result = qa(
+    question=<span class="st">"What is gradient descent?"</span>,
+    context=<span class="st">"Gradient descent minimizes a function by..."</span>
+)
+<span class="fn">print</span>(result.rationale)  <span class="cm"># step-by-step reasoning (added by ChainOfThought)</span>
+<span class="fn">print</span>(result.answer)     <span class="cm"># the final answer</span>
+
+<span class="cm"># ── Step 5: Optimize it against your own examples ─────────────────────</span>
+<span class="kw">def</span> <span class="fn">my_metric</span>(example, prediction, trace=<span class="kw">None</span>):
+    <span class="cm"># Your scoring function: return float 0.0 to 1.0</span>
+    <span class="kw">return</span> <span class="fn">score_answer_quality</span>(prediction.answer, example.expected_answer)
+
+<span class="cm"># MIPROv2 is a good general-purpose optimizer</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">MIPROv2</span>(metric=my_metric, auto=<span class="st">"medium"</span>)
+compiled  = optimizer.<span class="fn">compile</span>(qa, trainset=your_training_data)
+compiled.<span class="fn">save</span>(<span class="st">"optimized_qa.json"</span>)    <span class="cm"># save once, reuse forever</span>
+
+<span class="cm"># ── Later: load without re-optimizing ─────────────────────────────────</span>
+qa2 = <span class="cl">SmartQA</span>()
+qa2.<span class="fn">load</span>(<span class="st">"optimized_qa.json"</span>)          <span class="cm"># instant, no API calls needed</span></code></pre>
+
+<hr>
+
+<!-- PIPELINE COMPOSITION -->
+<h2>Composing a Multi-Step Pipeline</h2>
+<p>The real power is chaining modules in plain Python. Any <code>if</code>, <code>for</code>, or function call is valid &mdash; DSPy does not impose a graph structure.</p>
+
+<pre><code><span class="kw">class</span> <span class="cl">ResearchPipeline</span>(<span class="cl">dspy.Module</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="va">self</span>):
+        <span class="cm"># ReAct uses tools (here: a search function)</span>
+        <span class="va">self</span>.find_papers  = <span class="cl">dspy</span>.<span class="fn">ReAct</span>(<span class="st">"topic -> papers: list"</span>, tools=[search_arxiv])
+        <span class="cm"># ChainOfThought for reasoning over retrieved results</span>
+        <span class="va">self</span>.synthesize   = <span class="cl">dspy</span>.<span class="fn">ChainOfThought</span>(<span class="st">"topic, papers -> synthesis, gaps"</span>)
+        <span class="cm"># Predict for final structured output</span>
+        <span class="va">self</span>.write_review = <span class="cl">dspy</span>.<span class="fn">Predict</span>(<span class="st">"topic, synthesis, gaps -> review: str"</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(<span class="va">self</span>, topic):
+        <span class="cm"># Each call is a separate optimizable LLM interaction</span>
+        papers    = <span class="va">self</span>.find_papers(topic=topic)
+        synthesis = <span class="va">self</span>.synthesize(topic=topic, papers=papers.papers)
+        review    = <span class="va">self</span>.write_review(
+            topic=topic,
+            synthesis=synthesis.synthesis,
+            gaps=synthesis.gaps
+        )
+        <span class="kw">return</span> review
+
+<span class="cm"># The optimizer improves ALL three sub-modules simultaneously</span>
+optimizer = <span class="cl">dspy</span>.<span class="fn">GEPA</span>(metric=review_quality_metric)   <span class="cm"># &larr; see the GEPA guide!</span>
+compiled  = optimizer.<span class="fn">compile</span>(<span class="cl">ResearchPipeline</span>(), trainset=data)</code></pre>
+
+<hr>
+
+<!-- DSPy + LangGraph -->
+<h2>Integrating DSPy with LangGraph</h2>
+<p>DSPy and LangGraph solve different but complementary problems. <strong>LangGraph owns the workflow</strong> (which step runs next, how state flows). <strong>DSPy owns the LLM call quality</strong> within each step.</p>
+<p>The pattern: compile DSPy modules offline, then call them from inside LangGraph nodes.</p>
+
+<pre><code><span class="kw">from</span> langgraph.graph <span class="kw">import</span> <span class="cl">StateGraph</span>
+<span class="kw">from</span> typing <span class="kw">import</span> <span class="cl">TypedDict</span>
+<span class="kw">import</span> dspy
+
+<span class="cm"># Pre-compile DSPy programs offline (not during live execution)</span>
+lit_reviewer = <span class="cl">LitReviewPipeline</span>()
+lit_reviewer.<span class="fn">load</span>(<span class="st">"compiled_lit_reviewer.json"</span>)
+
+<span class="kw">class</span> <span class="cl">PaperState</span>(<span class="cl">TypedDict</span>):
+    topic: <span class="cl">str</span>; literature: <span class="cl">str</span>; methods: <span class="cl">str</span>
+
+<span class="cm"># Each LangGraph node wraps a DSPy call</span>
+<span class="kw">def</span> <span class="fn">lit_review_node</span>(state: <span class="cl">PaperState</span>) -&gt; <span class="cl">PaperState</span>:
+    result = lit_reviewer(topic=state[<span class="st">"topic"</span>])
+    <span class="kw">return</span> {<span class="st">"literature"</span>: result.review_paragraph}
+
+workflow = <span class="cl">StateGraph</span>(<span class="cl">PaperState</span>)
+workflow.<span class="fn">add_node</span>(<span class="st">"literature"</span>, lit_review_node)
+workflow.<span class="fn">set_entry_point</span>(<span class="st">"literature"</span>)
+app = workflow.<span class="fn">compile</span>()
+
+<span class="cm"># The workflow structure is stable; LLM quality is separately optimizable</span></code></pre>
+
+<hr>
+
+<!-- OPTIMIZER TABLE -->
+<h2>Choosing the Right Optimizer</h2>
+
+<table>
+  <tr><th>Optimizer</th><th>Strategy</th><th>Best For</th><th>Evals Needed</th></tr>
+  <tr><td><code>BootstrapFewShot</code></td><td>Collect successful traces as examples</td><td>Quick baseline, small datasets</td><td>~50&ndash;200</td></tr>
+  <tr><td><code>BootstrapFewShotWithRandomSearch</code></td><td>Same + random search over candidate sets</td><td>Better accuracy on simple programs</td><td>~200&ndash;500</td></tr>
+  <tr><td><code>MIPROv2</code></td><td>Bayesian search over instruction+example combos</td><td>General purpose</td><td>~200&ndash;1000</td></tr>
+  <tr><td style="color:var(--gepa)"><code>GEPA</code> &#10024;</td><td>Reflective evolutionary search</td><td>Complex pipelines, agents, tool use</td><td>100&ndash;500</td></tr>
+  <tr><td><code>GRPO</code></td><td>Gradient-based RL, fine-tunes model weights</td><td>When you have GPU access</td><td>5,000&ndash;25,000+</td></tr>
+</table>
+
+<div class="call cw">
+  <strong>When to choose GEPA over MIPROv2</strong>
+  If your program has multiple steps, uses tools, or fails in ways that are hard to capture with a single score &mdash; choose GEPA. It can read the full execution trace and diagnose where a failure occurred. See the GEPA guide for details.
+</div>
+
+<hr>
+
+<!-- TRACES -->
+<h2>DSPy Traces &mdash; The Bridge to GEPA</h2>
+
+<p>A <strong>trace</strong> is the complete execution record of a program run: every LLM call, every input, every output, and every tool invocation. Traces are the data structure that connects DSPy to GEPA.</p>
+
+<pre><code><span class="cm"># Traces are captured automatically during compilation.</span>
+<span class="cm"># You can also inspect them manually:</span>
+<span class="kw">with</span> <span class="cl">dspy</span>.<span class="fn">context</span>(trace=[]):
+    result = compiled_program(topic=<span class="st">"gradient descent"</span>)
+    trace  = <span class="cl">dspy</span>.settings.trace  <span class="cm"># full execution record</span>
+
+<span class="cm"># A trace for a 3-module pipeline looks like:</span>
+[
+  {<span class="st">"module"</span>: <span class="st">"find_papers"</span>,  <span class="st">"input"</span>: {<span class="st">"topic"</span>: <span class="st">"..."</span>},
+   <span class="st">"output"</span>: {<span class="st">"papers"</span>: [...]}, <span class="st">"tool_calls"</span>: [...]},
+  {<span class="st">"module"</span>: <span class="st">"synthesize"</span>,   <span class="st">"input"</span>: {<span class="st">"topic"</span>: <span class="st">"..."</span>, <span class="st">"papers"</span>: [...]},
+   <span class="st">"output"</span>: {<span class="st">"synthesis"</span>: <span class="st">"..."</span>, <span class="st">"gaps"</span>: [...]}},
+  {<span class="st">"module"</span>: <span class="st">"write_review"</span>, <span class="st">"input"</span>: {<span class="st">"..."</span>},
+   <span class="st">"output"</span>: {<span class="st">"review"</span>: <span class="st">"..."</span>}, <span class="st">"score"</span>: <span class="nu">0.82</span>}
+]</code></pre>
+
+<p>GEPA consumes these traces. Instead of seeing only the final score, it reads the complete trace and asks a reflection LLM: <em>"Why did this fail? What step went wrong?"</em> &mdash; then generates a targeted fix.</p>
+
+<hr>
+
+<!-- QUIZ -->
+<h2>Check Your Understanding</h2>
+
+<div class="qcard">
+  <p><strong>Q: You want a system that searches the web for papers and summarizes them. Which module handles the search step?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d1')">Predict</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ChainOfThought</button>
+    <button class="qopt" onclick="qa(this,true,'d1')">ReAct</button>
+    <button class="qopt" onclick="qa(this,false,'d1')">ProgramOfThought</button>
+  </div>
+  <div id="qf-d1" class="qfb ok"><strong>Correct!</strong> ReAct (Reason + Act) is the module built for tool-using agents. It lets the AI call your search function and reason about results in a loop. The others cannot call external tools.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: The Optimizer produces a .json file. What does it contain?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d2')">Fine-tuned model weights</button>
+    <button class="qopt" onclick="qa(this,true,'d2')">The winning prompt instructions and few-shot examples</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A compiled Python binary</button>
+    <button class="qopt" onclick="qa(this,false,'d2')">A Docker image</button>
+  </div>
+  <div id="qf-d2" class="qfb ok"><strong>Correct!</strong> Just text &mdash; the winning instruction string + selected few-shot demonstrations. No GPU, no model weights. Load it in milliseconds and use it without ever re-running the optimizer.</div>
+</div>
+
+<div class="qcard">
+  <p><strong>Q: What is the relationship between a Signature and a Module?</strong></p>
+  <div style="margin-top:10px">
+    <button class="qopt" onclick="qa(this,false,'d3')">They are the same thing with different names</button>
+    <button class="qopt" onclick="qa(this,true,'d3')">The Signature declares WHAT to do; the Module decides HOW to execute it</button>
+    <button class="qopt" onclick="qa(this,false,'d3')">The Module declares inputs/outputs; the Signature chooses the strategy</button>
+    <button class="qopt" onclick="qa(this,false,'d3')">Signatures are only for inputs; Modules are only for outputs</button>
+  </div>
+  <div id="qf-d3" class="qfb ok"><strong>Correct!</strong> Signature = WHAT (typed inputs/outputs). Module = HOW (strategy: Predict, ChainOfThought, ReAct, etc.). You can swap the Module without touching the Signature. This clean separation is what makes DSPy programs modular and optimizable.</div>
+</div>
+
+<!-- NEXT PAGE -->
+<div class="next-banner">
+  <div>
+    <strong>Next: GEPA &mdash; The Evolutionary Optimizer</strong>
+    <p>Learn how GEPA uses an AI to read failure logs and propose targeted fixes &mdash; 35x cheaper than Reinforcement Learning.</p>
+  </div>
+  <a class="btn-next" href="02_gepa.html">GEPA &#8594;</a>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function selNode(id) {
+  const nodes = ['sig','mod','opt'];
+  const isActive = document.getElementById('dp-' + id).classList.contains('on');
+  nodes.forEach(n => {
+    document.getElementById('nd-' + n).classList.remove('sel');
+    document.getElementById('dp-' + n).classList.remove('on');
+    const rect = document.querySelector('#nd-' + n + ' rect');
+    if (rect) rect.setAttribute('stroke','#252540');
+  });
+  if (!isActive) {
+    document.getElementById('nd-' + id).classList.add('sel');
+    document.getElementById('dp-' + id).classList.add('on');
+    const rect = document.querySelector('#nd-' + id + ' rect');
+    if (rect) rect.setAttribute('stroke','#5ba3f5');
+  }
+}
+
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled = true; o.style.cursor = 'default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-' + qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    opts.forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+</script>
+</body>
+</html>
