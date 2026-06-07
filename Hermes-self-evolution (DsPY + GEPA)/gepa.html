@@ -569,6 +569,901 @@ stopper = <span class="cl">CompositeStopper</span>([
 
 </div><!-- /wrap -->
 </div><!-- /tp-guide -->
-<!-- PART 2 PLACEHOLDER -->
+<!-- ═══════════════════ MATH TAB ═══════════════════ -->
+<div id="tp-math" style="display:none">
+<div class="container">
+
+  <section style="padding-top:50px">
+    <div class="part-header">
+      <div class="part-num" style="background:var(--grn)">G</div>
+      <div>
+        <h1>GEPA: The Math</h1>
+        <p style="margin:0;font-size:1.05rem">Why evolution beats grades &mdash; from scratch.</p>
+      </div>
+    </div>
+    <p>In the DSPy guide we learned how to compile prompts automatically. But the default optimizer has a flaw: it treats every goal as a single number. What if you want prompts that are <em>both accurate and concise</em>? GEPA solves this with evolutionary search &mdash; no gradients, no rewards, just "survival of the fittest prompt."</p>
+    <div class="flow-row" style="justify-content:center;margin-top:24px">
+      <div class="flow-box blue">DSPy compiles</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box yellow">needs optimizer</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box pink">RL fails on text</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box green">GEPA evolves</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 1 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">1</div>
+      <h2 style="margin:0">Why "Report Card" Optimization Fails</h2>
+    </div>
+    <p>Before GEPA, the usual way to optimize an LLM was <strong>Reinforcement Learning (RL)</strong>. Let's understand why RL struggles with text, using an analogy you already know.</p>
+    <div class="concept yellow">
+      <div class="concept-label">Analogy &mdash; The Report Card</div>
+      Imagine you write an essay. Your teacher only tells you: <strong>"Score: 62/100."</strong><br>
+      No comments. No feedback. Just a number.<br><br>
+      How do you improve? You can't. You'd have to <em>randomly rewrite</em> the essay and hope the number goes up.
+      That's what RL does to an LLM.
+    </div>
+    <div class="icard">
+      <h3>RL in 3 steps &mdash; and where it breaks</h3>
+      <div class="flow-row">
+        <div class="flow-box blue">1. Try a prompt</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box yellow">2. Get a score (reward)</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box pink">3. Nudge the parameters</div>
+      </div>
+      <p style="margin-top:14px">The problem: text is <strong>discrete</strong>. If your prompt has 50 tokens, there are roughly 50,000<sup>50</sup> possible prompts. You can't compute a gradient through that. Small changes to a prompt can make the score jump wildly &mdash; or do nothing.</p>
+      <div class="concept pink">
+        <div class="concept-label">New term &mdash; Sparse Reward</div>
+        RL needs a reward signal on <em>every step</em> to guide learning. But for prompts, we only know the final score. That's a <strong>sparse reward</strong>: almost always zero, occasionally one. Learning from this is like navigating a dark maze that only lights up when you reach the exit.
+      </div>
+    </div>
+    <div class="icard">
+      <h3>What GEPA does instead &mdash; "Here's exactly what went wrong"</h3>
+      <p>Instead of a number, GEPA gives the LLM a <strong>full diagnosis</strong>:</p>
+      <pre><span class="cm">-- RL reward --</span>
+score: <span class="num">0.62</span>
+
+<span class="cm">-- GEPA feedback (called "Actionable Side Information") --</span>
+failed_cases: [
+  { input: <span class="str">"What is 8 × 7?"</span>, got: <span class="str">"54"</span>, expected: <span class="str">"56"</span> },
+  { input: <span class="str">"Translate 'hello'"</span>, got: <span class="str">"hola"</span>, expected: <span class="str">"bonjour"</span> }
+]
+trace: <span class="str">"model skips showing work for multiplication"</span>
+diagnosis: <span class="str">"prompt does not instruct step-by-step computation"</span></pre>
+      <p>Now the optimizer <em>knows</em> exactly what to fix. No guessing. This is called <span data-tip="Full execution traces + natural-language diagnosis fed to the optimizer">Actionable Side Information (ASI)</span>.</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 2 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">2</div>
+      <h2 style="margin:0">Multi-Objective Optimization</h2>
+    </div>
+    <p>Here's the second problem with RL: it optimizes <em>one number</em>. But real-world prompts must balance <strong>multiple goals at once</strong>.</p>
+    <div class="concept teal">
+      <div class="concept-label">Real-world example</div>
+      You want a customer-service bot that is:<br>
+      <span class="tag green">accurate</span> <span class="tag blue">concise</span> <span class="tag yel">polite</span><br><br>
+      These goals <em>conflict</em>: being more verbose often improves accuracy but hurts conciseness.
+      Collapsing them into one score (accuracy×0.4 + conciseness×0.3 + politeness×0.3) forces you
+      to pick weights arbitrarily. What if you don't know the right weights?
+    </div>
+    <h3>Formal definition</h3>
+    <p>Let's write this mathematically. Suppose you have <strong>K</strong> objectives, and a prompt candidate called <strong>θ</strong>. The score of θ on objective <em>i</em> is:</p>
+    <div class="math-block">
+      <span class="math-label">score function</span>
+      F<sub>i</sub>(θ) = 𝔼<sub>(x,y) ~ 𝒟</sub> [M<sub>i</sub>(P<sub>θ</sub>(x), y)]
+    </div>
+    <table class="sym-table">
+      <tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td>F<sub>i</sub>(θ)</td><td>How well prompt θ does on objective i</td><td>F₁ = accuracy on test set</td></tr>
+      <tr><td>θ</td><td>The prompt candidate (instructions + few-shot examples)</td><td>"Always think step by step. Here are 3 examples..."</td></tr>
+      <tr><td>𝔼<sub>(x,y)~𝒟</sub></td><td>Average over the dataset 𝒟</td><td>Mean over 100 math questions</td></tr>
+      <tr><td>P<sub>θ</sub>(x)</td><td>LLM's answer to x using prompt θ</td><td>GPT-4's output given the prompt</td></tr>
+      <tr><td>M<sub>i</sub></td><td>Metric function i</td><td>M₁ = exact match, M₂ = output length</td></tr>
+    </table>
+    <p>So you have a <strong>vector</strong> of scores: <strong>F(θ) = [F₁(θ), F₂(θ), ..., F<sub>K</sub>(θ)]</strong>.</p>
+    <p>The problem: <em>which θ is "best" when you have K numbers instead of one?</em> This is where Pareto dominance comes in.</p>
+
+    <div class="icard">
+      <h3>Pareto Dominance &mdash; the "strictly better" idea</h3>
+      <p>We say prompt <strong>θ dominates θ'</strong> (written θ ≻ θ') if:</p>
+      <div class="math-block">
+        <span class="math-label">Pareto dominance</span>
+        θ ≻ θ' &nbsp;⟺&nbsp; ∀i: F<sub>i</sub>(θ) ≥ F<sub>i</sub>(θ') &nbsp;and&nbsp; ∃j: F<sub>j</sub>(θ) &gt; F<sub>j</sub>(θ')
+      </div>
+      <div class="concept green">
+        <div class="concept-label">Plain English</div>
+        θ dominates θ' means: θ is <em>at least as good</em> on every metric, and <em>strictly better</em> on at least one metric. In other words &mdash; θ is better in some way and worse in no way.
+      </div>
+      <p>A prompt that nobody dominates is called <strong>Pareto-optimal</strong>. The set of all Pareto-optimal prompts is the <strong>Pareto Front</strong>.</p>
+    </div>
+
+    <div class="icard">
+      <h3>Interactive Pareto Front Explorer</h3>
+      <p>Below is a 2-objective space: <span class="hl-blue">Accuracy</span> vs <span class="hl-grn">Conciseness</span>. Click anywhere to add a candidate prompt. The system identifies which points are Pareto-optimal (shown in <span class="hl-lav">purple ★</span>) versus dominated (shown in gray).</p>
+      <div class="canvas-wrap" style="margin:14px 0">
+        <canvas id="paretoCanvas" width="700" height="360" style="cursor:crosshair;max-width:100%"></canvas>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">
+        <span style="font-size:.82rem;color:var(--dim)">Click to add points &nbsp;|&nbsp;</span>
+        <button class="btn" onclick="clearPareto()">Clear all</button>
+        <button class="btn green-btn" onclick="addExampleSet()">Load example set</button>
+        <span style="font-size:.82rem;color:var(--dim)" id="pareto-count"></span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 3 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">3</div>
+      <h2 style="margin:0">The GEPA Algorithm &mdash; Step by Step</h2>
+    </div>
+    <p>GEPA stands for <strong>Genetic-Pareto</strong> Optimizer. It's an evolutionary algorithm: it starts with a population of prompt candidates and iteratively breeds better ones. Click through each step below.</p>
+    <div class="stepper">
+      <div class="step-dots" id="gepa-dots"></div>
+      <div id="gepa-panels"></div>
+      <div class="step-nav">
+        <button class="btn" onclick="gepaPrev()">&#8592; Prev</button>
+        <button class="btn green-btn" onclick="gepaNext()">Next &#8594;</button>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 4 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">4</div>
+      <h2 style="margin:0">Reflection + Mutation: the Math</h2>
+    </div>
+    <p>The heart of GEPA is a two-stage transformation: <strong>Reflect</strong> (diagnose) then <strong>Mutate</strong> (fix). Let's make this precise.</p>
+    <div class="concept teal">
+      <div class="concept-label">Analogy &mdash; The Debugging Loop</div>
+      You have buggy code. A senior developer <strong>reads the error messages and traces</strong> (Reflect)
+      and writes a diagnosis: "The bug is in the loop index." Then they <strong>edit the specific line</strong>
+      (Mutate). They don't randomly rewrite the whole file &mdash; they make <em>targeted</em> changes.
+    </div>
+    <h3>Step 1 &mdash; Reflection</h3>
+    <p>Given a prompt θ that failed on a minibatch 𝒮, the <strong>Reflect</strong> operator calls an LLM to produce a natural-language diagnosis:</p>
+    <div class="math-block" style="font-size:1.1rem">
+      <span class="math-label">Reflect</span>
+      d = LM<sub>reflect</sub>(θ, 𝒮, τ(θ, 𝒮))
+    </div>
+    <table class="sym-table">
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td>d</td><td>Diagnosis text &mdash; what went wrong and why</td></tr>
+      <tr><td>LM<sub>reflect</sub></td><td>A language model acting as a "critic"</td></tr>
+      <tr><td>θ</td><td>The current prompt candidate</td></tr>
+      <tr><td>𝒮</td><td>The minibatch of failed examples</td></tr>
+      <tr><td>τ(θ, 𝒮)</td><td>Execution trace &mdash; the full input/reasoning/output chain</td></tr>
+    </table>
+    <h3 style="margin-top:24px">Step 2 &mdash; Mutation</h3>
+    <p>The <strong>Mutate</strong> operator takes the original prompt and the diagnosis and produces an improved prompt:</p>
+    <div class="math-block" style="font-size:1.1rem">
+      <span class="math-label">Mutate</span>
+      θ' = LM<sub>mutate</sub>(θ, d)
+    </div>
+    <table class="sym-table">
+      <tr><th>Symbol</th><th>Meaning</th></tr>
+      <tr><td>θ'</td><td>The new, (hopefully) improved prompt candidate</td></tr>
+      <tr><td>LM<sub>mutate</sub></td><td>A language model acting as a "fixer" / "editor"</td></tr>
+      <tr><td>d</td><td>The diagnosis from the Reflect step</td></tr>
+    </table>
+    <p>Together, these form a full transformation: <strong>θ → τ → d → θ'</strong></p>
+    <div class="flow-row" style="margin-top:14px">
+      <div class="flow-box lav">θ (old prompt)</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box blue">Run on 𝒮<br><small>get traces τ</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box yellow">LM_reflect<br><small>diagnosis d</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box green">LM_mutate<br><small>new prompt θ'</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box lav">Accept if F(θ') ≻ F(θ)</div>
+    </div>
+
+    <div class="icard" style="margin-top:24px">
+      <h3>Live Reflect + Mutate Demo</h3>
+      <p>Pick a failing scenario and watch the diagnosis + mutation happen:</p>
+      <div class="btn-group" id="scenario-btns">
+        <button class="btn active" onclick="setScenario(0)">Math errors</button>
+        <button class="btn" onclick="setScenario(1)">Wrong language</button>
+        <button class="btn" onclick="setScenario(2)">Too verbose</button>
+      </div>
+      <div class="two-col">
+        <div>
+          <div style="font-size:.78rem;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Original Prompt θ</div>
+          <pre id="reflect-prompt" style="margin:0;font-size:.8rem"></pre>
+        </div>
+        <div>
+          <div style="font-size:.78rem;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Failed trace τ</div>
+          <pre id="reflect-trace" style="margin:0;font-size:.8rem"></pre>
+        </div>
+      </div>
+      <button class="btn green-btn" style="margin-top:14px" onclick="runReflect()">Reflect →</button>
+      <div id="reflect-result" style="display:none;margin-top:14px">
+        <div style="font-size:.78rem;color:var(--yel);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">LM_reflect diagnosis d</div>
+        <pre id="reflect-diag" style="border-color:var(--yel);font-size:.8rem"></pre>
+        <button class="btn green-btn" style="margin-top:10px" onclick="runMutate()">Mutate →</button>
+        <div id="mutate-result" style="display:none;margin-top:14px">
+          <div style="font-size:.78rem;color:var(--grn);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">New Prompt θ' (after mutation)</div>
+          <pre id="mutate-prompt" style="border-color:var(--grn);font-size:.8rem"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 5 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">5</div>
+      <h2 style="margin:0">Selection from the Pareto Front</h2>
+    </div>
+    <p>After mutation, GEPA has multiple candidate prompts. How does it decide which ones to keep? It maintains a <strong>Pareto Archive</strong> &mdash; only Pareto-optimal candidates survive.</p>
+    <div class="concept">
+      <div class="concept-label">Why keep multiple candidates?</div>
+      Different use cases need different trade-offs. A research assistant might want maximum accuracy.
+      A customer service bot needs conciseness. GEPA's Pareto archive gives you the <em>entire frontier</em>
+      of trade-offs, and you pick the point that fits your deployment.
+    </div>
+    <h3>The Archive Update Rule</h3>
+    <div class="math-block" style="font-size:1rem">
+      <span class="math-label">Archive update</span>
+      𝒜<sub>t+1</sub> = { θ ∈ 𝒜<sub>t</sub> ∪ {θ'} : ¬∃φ ∈ 𝒜<sub>t</sub> ∪ {θ'} s.t. φ ≻ θ }
+    </div>
+    <div class="concept green">
+      <div class="concept-label">Plain English</div>
+      The new archive is: take the old archive plus the new candidate, then throw away anything that
+      is dominated by something else. Only the "nobody beats me on everything" prompts survive.
+    </div>
+    <div class="icard">
+      <h3>Archive Animation</h3>
+      <p>Watch candidates being added to the archive. Dominated points are eliminated.</p>
+      <div class="canvas-wrap">
+        <canvas id="archiveCanvas" width="700" height="300" style="max-width:100%"></canvas>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn green-btn" onclick="archiveStep()">Add next candidate →</button>
+        <button class="btn" onclick="archiveReset()">Reset</button>
+        <span id="archive-msg" style="font-size:.85rem;color:var(--dim);align-self:center"></span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 6 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">6</div>
+      <h2 style="margin:0">Actionable Side Information vs Scalar Rewards</h2>
+    </div>
+    <p>This is the key insight that makes GEPA 35x more sample-efficient than RL. Let's compare what each optimizer "sees."</p>
+    <div class="two-col">
+      <div class="concept pink" style="margin:0">
+        <div class="concept-label">RL / GRPO sees</div>
+        <strong>Score: 0.62</strong><br><br>
+        That's it. One number. No idea what went wrong.<br><br>
+        To improve, you must <em>randomly sample thousands of prompts</em> until something works.
+      </div>
+      <div class="concept green" style="margin:0">
+        <div class="concept-label">GEPA sees (ASI)</div>
+        <strong>Score: 0.62</strong> + trace of every failure + natural-language diagnosis<br><br>
+        Knows exactly what failed and why. Makes a <em>targeted one-step fix</em>.
+      </div>
+    </div>
+    <div class="icard" style="margin-top:24px">
+      <h3>Information toy model</h3>
+      <p>Suppose a score ∈ [0,1] discretized to 0.01 precision. That gives ~7 bits of information per evaluation.</p>
+      <p>Actionable Side Information (full trace + diagnosis) might contain thousands of tokens of targeted feedback &mdash; orders of magnitude more information per sample.</p>
+      <p>This is why GEPA achieves the same optimization quality in <strong>~35x fewer LLM evaluations</strong> compared to GRPO.</p>
+      <div style="margin-top:18px">
+        <div style="font-size:.82rem;color:var(--dim);margin-bottom:10px">Evaluations needed to reach 80% accuracy on GSM8K math benchmark</div>
+        <div style="margin-bottom:8px">
+          <div style="font-size:.82rem;color:var(--pnk);margin-bottom:4px">GRPO (RL)</div>
+          <div class="score-bar-outer"><div class="score-bar-inner" style="width:100%;background:var(--pnk)">3,500 evals</div></div>
+        </div>
+        <div>
+          <div style="font-size:.82rem;color:var(--grn);margin-bottom:4px">GEPA</div>
+          <div class="score-bar-outer"><div class="score-bar-inner" id="gepa-eff-bar" style="width:0%;background:var(--grn);transition:width 1.2s ease">100 evals</div></div>
+        </div>
+        <button class="btn green-btn" onclick="showGepaBar()" style="margin-top:12px">Show GEPA efficiency →</button>
+      </div>
+    </div>
+    <table class="cmp-table" style="margin-top:24px">
+      <tr><th>Property</th><th class="rl">RL / GRPO</th><th class="gp">GEPA</th></tr>
+      <tr><td>Information per eval</td><td class="rl">~7 bits (scalar score)</td><td class="gp">Thousands of bits (trace + diagnosis)</td></tr>
+      <tr><td>Mutation strategy</td><td class="rl">Random / gradient-based</td><td class="gp">Targeted via diagnosis</td></tr>
+      <tr><td>Objectives</td><td class="rl">Single scalar</td><td class="gp">Multi-objective Pareto front</td></tr>
+      <tr><td>Sample efficiency</td><td class="rl">Baseline</td><td class="gp">~35x fewer evaluations</td></tr>
+      <tr><td>Requires gradient?</td><td class="rl">Yes (or many samples)</td><td class="gp">No</td></tr>
+      <tr><td>Works with black-box LLMs?</td><td class="rl">Difficult</td><td class="gp">Yes</td></tr>
+    </table>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 7 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">7</div>
+      <h2 style="margin:0">Full Algorithm &mdash; Convergence in Action</h2>
+    </div>
+    <p>Now let's put it all together. The full GEPA loop is iterative: each round, candidates evolve and the Pareto archive improves. Click "Run next generation" to watch the scores climb.</p>
+    <div class="icard">
+      <h3>GEPA Optimization Progress</h3>
+      <p>Watching <span class="hl-blue">Accuracy</span> (blue) and <span class="hl-grn">Conciseness</span> (green) improve together over generations.</p>
+      <canvas id="convergenceCanvas" width="700" height="280" style="max-width:100%;background:#11111b;border:1px solid var(--border);border-radius:10px"></canvas>
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn green-btn" onclick="runGeneration()">Run next generation →</button>
+        <button class="btn" onclick="resetConvergence()">Reset</button>
+        <span id="gen-label" style="font-size:.85rem;color:var(--dim)">Generation 0 &mdash; click to start</span>
+      </div>
+    </div>
+    <div class="icard" style="margin-top:16px">
+      <h3>The full algorithm in pseudocode</h3>
+      <pre><span class="cm"># GEPA algorithm</span>
+<span class="kw">def</span> <span class="fn">gepa_optimize</span>(program, dataset, objectives, max_iters):
+    archive = <span class="fn">bootstrap</span>(program, dataset)  <span class="cm"># run DSPy's Bootstrap first</span>
+    <span class="kw">for</span> t <span class="kw">in</span> <span class="fn">range</span>(max_iters):
+        theta = <span class="fn">sample_from_pareto_front</span>(archive)
+        S = <span class="fn">sample_minibatch</span>(dataset)
+        tau = <span class="fn">run_with_traces</span>(theta, S)
+        diagnosis = LM_reflect(theta, S, tau)
+        theta_new = LM_mutate(theta, diagnosis)
+        scores_new = <span class="fn">evaluate</span>(theta_new, objectives)
+        archive = <span class="fn">update_pareto_archive</span>(archive, theta_new, scores_new)
+    <span class="kw">return</span> archive</pre>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- PART 8 -->
+  <section>
+    <div class="part-header">
+      <div class="part-num">8</div>
+      <h2 style="margin:0">From Math to Code</h2>
+    </div>
+    <p>Here's how the math translates to actual DSPy code. Expand each part to see the connection.</p>
+    <div class="accordion" onclick="toggleAccordion(this)">
+      <div class="accordion-header">
+        <span><strong>Define your objectives (the F<sub>i</sub> functions)</strong></span>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="accordion-body">
+        <p>Each objective is a Python function that returns a score in [0,1]:</p>
+        <pre><span class="cm"># Objective 1: Accuracy</span>
+<span class="kw">def</span> <span class="fn">accuracy</span>(example, pred, trace=<span class="kw">None</span>):
+    <span class="kw">return</span> <span class="fn">float</span>(pred.answer.strip() == example.answer.strip())
+
+<span class="cm"># Objective 2: Conciseness (shorter is better, up to 200 chars)</span>
+<span class="kw">def</span> <span class="fn">conciseness</span>(example, pred, trace=<span class="kw">None</span>):
+    length = <span class="fn">len</span>(pred.answer)
+    <span class="kw">return</span> <span class="fn">max</span>(<span class="num">0</span>, <span class="num">1</span> - length / <span class="num">200</span>)
+
+<span class="cm"># These are F₁ and F₂ from the math</span></pre>
+      </div>
+    </div>
+    <div class="accordion" onclick="toggleAccordion(this)" style="margin-top:8px">
+      <div class="accordion-header">
+        <span><strong>Run GEPA (the full algorithm loop)</strong></span>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="accordion-body">
+        <pre><span class="kw">import</span> dspy
+lm = dspy.<span class="cls">LM</span>(<span class="str">"openai/gpt-4o-mini"</span>)
+dspy.<span class="fn">configure</span>(lm=lm)
+
+program = dspy.<span class="cls">ChainOfThought</span>(<span class="str">"question -> answer"</span>)
+
+optimizer = dspy.<span class="cls">GEPA</span>(
+    metric=[accuracy, conciseness],  <span class="cm"># F(θ) = [F₁, F₂]</span>
+    max_iters=<span class="num">10</span>,
+)
+optimized = optimizer.<span class="fn">compile</span>(program, trainset=trainset)
+
+best_accurate = optimized.pareto_front[<span class="num">0</span>]   <span class="cm"># most accurate</span>
+best_concise  = optimized.pareto_front[-<span class="num">1</span>]   <span class="cm"># most concise</span></pre>
+      </div>
+    </div>
+    <div class="accordion" onclick="toggleAccordion(this)" style="margin-top:8px">
+      <div class="accordion-header">
+        <span><strong>Standalone GEPA (without DSPy)</strong></span>
+        <span class="chevron">&#9660;</span>
+      </div>
+      <div class="accordion-body">
+        <pre><span class="kw">from</span> gepa <span class="kw">import</span> <span class="cls">GEPAOptimizer</span>, <span class="cls">PromptCandidate</span>
+
+optimizer = <span class="cls">GEPAOptimizer</span>(
+    objectives=[accuracy, conciseness],
+    reflect_model=<span class="str">"claude-sonnet-4-6"</span>,
+    mutate_model=<span class="str">"claude-sonnet-4-6"</span>,
+    max_iters=<span class="num">20</span>,
+)
+initial_prompt = <span class="cls">PromptCandidate</span>(instructions=<span class="str">"Answer the question."</span>, demos=[])
+pareto_front = optimizer.<span class="fn">run</span>(initial=initial_prompt, dataset=my_dataset)
+
+<span class="kw">for</span> candidate <span class="kw">in</span> pareto_front:
+    <span class="fn">print</span>(candidate.scores, candidate.instructions)</pre>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- QUIZ -->
+  <section>
+    <div class="part-header">
+      <div class="part-num" style="background:var(--pnk);color:var(--bg)">?</div>
+      <h2 style="margin:0">Check Your Understanding</h2>
+    </div>
+    <div class="quiz-q">
+      <p>1. Prompt A scores [0.9 accuracy, 0.5 conciseness]. Prompt B scores [0.8 accuracy, 0.7 conciseness]. Which is true?</p>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q1')">A dominates B &mdash; A has higher accuracy</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q1')">B dominates A &mdash; B is more concise overall</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,true,'Q1')">Neither dominates the other &mdash; they are both Pareto-optimal</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q1')">A dominates B only if accuracy matters more than conciseness</button>
+      <div class="quiz-feedback" id="Q1-feedback"></div>
+    </div>
+    <div class="quiz-q">
+      <p>2. What is "Actionable Side Information" (ASI) in GEPA?</p>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q2')">A special reward signal computed from the LLM's weights</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,true,'Q2')">Full execution traces + natural-language diagnosis of failures</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q2')">The scalar accuracy score on the test set</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q2')">The list of Pareto-optimal candidates in the archive</button>
+      <div class="quiz-feedback" id="Q2-feedback"></div>
+    </div>
+    <div class="quiz-q">
+      <p>3. In the Reflect step, the formula is: d = LM_reflect(θ, 𝒮, τ(θ, 𝒮)). What is τ?</p>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q3')">The set of training examples</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q3')">The Pareto archive from the previous generation</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,true,'Q3')">The execution trace &mdash; the full input/reasoning/output chain</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q3')">The temperature parameter of the LLM</button>
+      <div class="quiz-feedback" id="Q3-feedback"></div>
+    </div>
+    <div class="quiz-q">
+      <p>4. Why is GEPA ~35x more sample-efficient than GRPO?</p>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q4')">GEPA uses a larger language model for mutation</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q4')">GEPA evaluates more candidates in parallel</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,true,'Q4')">ASI carries far more information per evaluation than a scalar reward, enabling targeted mutations instead of random search</button>
+      <button class="quiz-opt" onclick="quizAnswer(this,false,'Q4')">GEPA uses gradient descent on the prompt tokens</button>
+      <div class="quiz-feedback" id="Q4-feedback"></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- SUMMARY -->
+  <section>
+    <h2>The Big Picture in One Slide</h2>
+    <div class="icard">
+      <div class="flow-row" style="justify-content:center;flex-wrap:wrap">
+        <div class="flow-box lav" style="min-width:130px;text-align:center"><strong>DSPy</strong><br><small>defines the program θ</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box blue" style="min-width:130px;text-align:center"><strong>GEPA</strong><br><small>evolves θ using<br>Reflect + Mutate</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box green" style="min-width:130px;text-align:center"><strong>Pareto Front</strong><br><small>best trade-offs<br>for your use case</small></div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box yellow" style="min-width:130px;text-align:center"><strong>Hermes</strong><br><small>applies this to<br>AI skill files</small></div>
+      </div>
+      <div style="margin-top:20px">
+        <p><span class="tag blue">DSPy</span> gives us the abstraction: <em>"compile a program, not a prompt."</em></p>
+        <p><span class="tag green">GEPA</span> gives us the engine: <em>"evolve the program guided by rich feedback."</em></p>
+        <p><span class="tag yel">Hermes</span> gives us the application: <em>"evolve Claude Code skill files from real session history."</em></p>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<div class="bottom-nav">
+  <a href="dspy.html" class="btn-p">&#8592; DSPy</a>
+  <span style="color:var(--dim);font-size:.88rem">You've completed the GEPA math guide</span>
+  <a href="03_hermes.html" class="btn-n">Hermes &#8594;</a>
+</div>
+</div><!-- /tp-math -->
+<script>
+/* === TAB SWITCHING === */
+function showTab(name) {
+  document.querySelectorAll('#tp-guide,#tp-math').forEach(p => p.style.display='none');
+  document.querySelectorAll('.tbar-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tp-'+name).style.display='block';
+  document.querySelector('.tbar-btn[data-tab="'+name+'"]').classList.add('on');
+  if (name === 'math') { drawPareto(); drawArchive(); drawConvergence(); }
+  window.scrollTo(0,0);
+}
+
+/* === PROGRESS BAR === */
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  document.getElementById('top-prog').style.width = Math.min(pct,100)+'%';
+});
+
+/* === GUIDE: LOOP STAGES === */
+function selStage(id) {
+  const stages = ['eval','refl','muta','sel'];
+  const isActive = document.getElementById('st-'+id).classList.contains('on');
+  stages.forEach(s => {
+    document.getElementById('st-'+s).classList.remove('on');
+    document.getElementById('sd-'+s).classList.remove('on');
+  });
+  if (!isActive) {
+    document.getElementById('st-'+id).classList.add('on');
+    document.getElementById('sd-'+id).classList.add('on');
+  }
+}
+
+/* === GUIDE: ADAPTERS === */
+const adInfo = {
+  dspy:{title:'DSPy Full Program Adapter',
+    body:'Optimizes entire DSPy programs: signature instructions, few-shot demos, and module-level prompting strategies simultaneously.',
+    code:'optimizer = dspy.GEPA(metric=feedback_fn, num_iterations=10)\ncompiled = optimizer.compile(my_program, trainset=data)\ncompiled.save("evolved.json")'},
+  lc:{title:'LangChain Adapter',
+    body:'Optimizes any LangChain pipeline: simple chains, multi-agent systems, LangGraph graphs. Works with LCEL and legacy chain APIs.',
+    code:'from gepa.adapters.langchain import LangChainAdapter\nadapter = LangChainAdapter(chain=my_chain, feedback_fn=fn)\nbest = adapter.run(test_cases=data, num_iterations=10)'},
+  mcp:{title:'MCP Tool Adapter',
+    body:'Optimizes the description string of each MCP tool. A richer description means Claude calls tools more accurately with better arguments.',
+    code:'from gepa.adapters.mcp import MCPAdapter\nadapter = MCPAdapter(\n    server_config={"type":"stdio","command":"my-server"},\n    tools_to_optimize=["search","edit","run"],\n    feedback_fn=fn\n)\nevolved = adapter.run(num_iterations=10)'},
+  rag:{title:'RAG Pipeline Adapter',
+    body:'Optimizes all text parameters in a RAG pipeline: query reformulation, context synthesis, answer generation instructions.',
+    code:'from gepa.adapters.rag import RAGAdapter\nadapter = RAGAdapter(\n    retriever=my_retriever,\n    generator=my_generator,\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'},
+  term:{title:'Terminal / TerminalBench Adapter',
+    body:'Optimizes external agentic pipelines that run as subprocess commands. Works with any agent in a terminal.',
+    code:'from gepa.adapters.terminal import TerminalAdapter\nadapter = TerminalAdapter(\n    command=["python","agent.py","--config","{config}"],\n    feedback_fn=fn\n)\nbest = adapter.run(test_cases=data)'},
+  cc:{title:'Claude Code Integration',
+    body:'Use the MCP adapter to evolve your Claude Code tool descriptions. Or use standalone GEPA with TextComponent to optimize your CLAUDE.md skill files.',
+    code:'from gepa import GEPA, TextComponent\ncomponent = TextComponent(\n    text=open("~/.claude/skills/my-skill.md").read(),\n    name="skill_prompt"\n)\ng = GEPA(components=[component], metric=my_eval_fn)\nbest = g.run(test_cases=your_examples)'}
+};
+function showAd(id) {
+  const info = adInfo[id];
+  document.getElementById('ad-title').textContent = info.title;
+  document.getElementById('ad-body').textContent = info.body;
+  document.getElementById('ad-code').textContent = info.code;
+  const box = document.getElementById('ad-detail');
+  box.style.display='block';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* === GUIDE: QUIZ === */
+function qa(btn, correct, qid) {
+  const opts = btn.parentElement.querySelectorAll('.qopt');
+  opts.forEach(o => { o.disabled=true; o.style.cursor='default'; });
+  btn.classList.add(correct ? 'right' : 'wrong');
+  const fb = document.getElementById('qf-'+qid);
+  fb.classList.add('on');
+  if (!correct) {
+    fb.classList.remove('ok'); fb.classList.add('bad');
+    fb.querySelector('strong').textContent = 'Not quite \u2014';
+    opts.forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('right'); });
+  }
+}
+
+/* === MATH: ACCORDION === */
+function toggleAccordion(el) {
+  const header = el.querySelector('.accordion-header');
+  const body = el.querySelector('.accordion-body');
+  const chevron = el.querySelector('.chevron');
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+/* === MATH: QUIZ === */
+function quizAnswer(btn, correct, qid) {
+  btn.parentElement.querySelectorAll('.quiz-opt').forEach(b => { b.disabled=true; b.style.cursor='default'; });
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById(qid+'-feedback');
+  fb.classList.add('show', correct ? 'ok' : 'no');
+  const msgs = {
+    Q1:{ok:'Correct! Neither A nor B dominates the other — A wins on accuracy, B wins on conciseness. Both are Pareto-optimal.',
+        no:'Not quite. For dominance, one candidate must be better on ALL objectives. A is better on accuracy but worse on conciseness, so neither dominates.'},
+    Q2:{ok:'Correct! ASI = execution traces showing exactly what failed + a natural-language diagnosis of why it failed.',
+        no:'Incorrect. ASI is rich contextual feedback: the full trace of inputs/reasoning/outputs plus a diagnosis — not just a score.'},
+    Q3:{ok:'Correct! τ(θ, 𝒮) is the execution trace — the detailed record of inputs, intermediate steps, and outputs.',
+        no:'No. τ (tau) represents the execution trace: everything that happened when the program ran on the minibatch.'},
+    Q4:{ok:'Correct! Rich ASI means each evaluation tells you exactly what to fix. You need far fewer evaluations to converge than random search.',
+        no:'Incorrect. The efficiency gain comes from the information content of ASI — targeted feedback vs. sparse scalar rewards.'},
+  };
+  fb.textContent = msgs[qid][correct ? 'ok' : 'no'];
+}
+
+/* === MATH: PARETO CANVAS === */
+let paretoPoints = [];
+function toCanvasX(norm,W,PAD){return PAD+norm*(W-2*PAD);}
+function toCanvasY(norm,H,PAD){return H-PAD-norm*(H-2*PAD);}
+function fromCanvasX(cx,W,PAD){return(cx-PAD)/(W-2*PAD);}
+function fromCanvasY(cy,H,PAD){return(H-PAD-cy)/(H-2*PAD);}
+
+function drawPareto() {
+  const canvas = document.getElementById('paretoCanvas');
+  const ctx = canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height, PAD=50;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#45475a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,PAD); ctx.lineTo(PAD,H-PAD); ctx.moveTo(PAD,H-PAD); ctx.lineTo(W-PAD,H-PAD); ctx.stroke();
+  ctx.fillStyle='#a6adc8'; ctx.font='13px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Accuracy →',W/2,H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Conciseness →',0,0); ctx.restore();
+  for(let i=0;i<=4;i++){
+    const x=PAD+(W-2*PAD)*i/4, y=H-PAD-(H-2*PAD)*i/4;
+    ctx.fillStyle='#6c7086'; ctx.font='11px Segoe UI';
+    ctx.textAlign='center'; ctx.fillText((i*25)+'%',x,H-PAD+16);
+    ctx.textAlign='right'; ctx.fillText((i*25)+'%',PAD-6,y+4);
+  }
+  if(paretoPoints.length===0){
+    ctx.fillStyle='#45475a'; ctx.font='14px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('Click inside the chart to add prompt candidates',W/2,H/2);
+    document.getElementById('pareto-count').textContent=''; return;
+  }
+  const dominated=new Set();
+  for(let i=0;i<paretoPoints.length;i++)
+    for(let j=0;j<paretoPoints.length;j++){
+      if(i===j)continue;
+      const a=paretoPoints[i],b=paretoPoints[j];
+      if(b.x>=a.x&&b.y>=a.y&&(b.x>a.x||b.y>a.y)) dominated.add(i);
+    }
+  const paretoOpt=paretoPoints.filter((_,i)=>!dominated.has(i)).sort((a,b)=>a.x-b.x);
+  if(paretoOpt.length>1){
+    ctx.strokeStyle='rgba(180,190,254,0.25)'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(PAD,toCanvasY(paretoOpt[0].y,H,PAD));
+    for(const p of paretoOpt) ctx.lineTo(toCanvasX(p.x,W,PAD),toCanvasY(p.y,H,PAD));
+    ctx.lineTo(W-PAD,toCanvasY(paretoOpt[paretoOpt.length-1].y,H,PAD));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  paretoPoints.forEach((p,i)=>{
+    const cx=toCanvasX(p.x,W,PAD),cy=toCanvasY(p.y,H,PAD),isOpt=!dominated.has(i);
+    ctx.beginPath(); ctx.arc(cx,cy,isOpt?9:7,0,Math.PI*2);
+    ctx.fillStyle=isOpt?'#b4befe':'#45475a'; ctx.fill();
+    ctx.strokeStyle=isOpt?'#cdd6f4':'#585b70'; ctx.lineWidth=1.5; ctx.stroke();
+    if(isOpt){ctx.fillStyle='#11111b';ctx.font='bold 10px Segoe UI';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('★',cx,cy);}
+  });
+  const nOpt=paretoPoints.length-dominated.size;
+  document.getElementById('pareto-count').textContent=`${paretoPoints.length} candidates · ${nOpt} Pareto-optimal (★)`;
+}
+document.getElementById('paretoCanvas').addEventListener('click',function(e){
+  const rect=this.getBoundingClientRect();
+  const scaleX=this.width/rect.width,scaleY=this.height/rect.height;
+  const cx=(e.clientX-rect.left)*scaleX,cy=(e.clientY-rect.top)*scaleY,PAD=50;
+  const x=fromCanvasX(cx,this.width,PAD),y=fromCanvasY(cy,this.height,PAD);
+  if(x>=0&&x<=1&&y>=0&&y<=1){paretoPoints.push({x,y});drawPareto();}
+});
+function clearPareto(){paretoPoints=[];drawPareto();}
+function addExampleSet(){
+  paretoPoints=[{x:.9,y:.3},{x:.85,y:.5},{x:.7,y:.75},{x:.5,y:.9},{x:.6,y:.6},{x:.4,y:.8},{x:.75,y:.4},{x:.3,y:.7},{x:.8,y:.35},{x:.55,y:.55},{x:.65,y:.45},{x:.45,y:.65}];
+  drawPareto();
+}
+
+/* === MATH: GEPA STEPPER === */
+const gepaSteps=[
+  {label:'Step 0 — Bootstrap',color:'var(--lav)',content:`
+    <h3 style="color:var(--lav)">Bootstrap Initial Population</h3>
+    <p>Before GEPA runs, DSPy's standard <strong>Bootstrap</strong> optimizer creates an initial set of candidates by running the program on training examples and collecting successful traces as few-shot demonstrations.</p>
+    <div class="flow-row"><div class="flow-box lav">Training data</div><span class="flow-arrow">→</span><div class="flow-box lav">Run program</div><span class="flow-arrow">→</span><div class="flow-box lav">Collect good traces</div><span class="flow-arrow">→</span><div class="flow-box lav">Initial archive θ₀</div></div>
+    <div class="concept" style="margin-top:16px"><div class="concept-label">Why bootstrap?</div>GEPA is evolutionary — it needs a decent starting population. A random prompt is a terrible starting point. Bootstrapping gives GEPA already-decent candidates to improve upon.</div>`},
+  {label:'Step 1 — Select',color:'var(--blue)',content:`
+    <h3 style="color:var(--blue)">Select from the Pareto Front</h3>
+    <p>At each iteration, GEPA picks a candidate θ from the current Pareto archive to evolve, using <strong>tournament selection</strong>:</p>
+    <div class="math-block" style="font-size:1.1rem"><span class="math-label">selection</span>θ = <span style="font-size:.85em">argmax</span><sub>θ ∈ 𝒜</sub> &nbsp;Σ<sub>i</sub> F<sub>i</sub>(θ)</div>
+    <p>In practice, selection has a bit of randomness — sometimes a weaker candidate is chosen to maintain diversity, analogous to how biological evolution doesn't always pick the "fittest."</p>`},
+  {label:'Step 2 — Evaluate',color:'var(--yel)',content:`
+    <h3 style="color:var(--yel)">Evaluate on a Minibatch</h3>
+    <p>The selected candidate θ is run on a small random sample 𝒮 from the training data, producing:</p>
+    <ul style="color:var(--dim);margin-left:20px;line-height:2"><li><strong style="color:var(--txt)">Objective scores</strong> — F₁(θ), F₂(θ), ... on this batch</li><li><strong style="color:var(--txt)">Execution traces</strong> τ — the full reasoning chains for each example</li></ul>
+    <div class="concept yellow"><div class="concept-label">Why minibatches?</div>Evaluating on the full dataset every iteration would be expensive. A minibatch of 10-20 examples gives a statistically reasonable estimate, and it's the <em>failures</em> in that batch that matter most.</div>`},
+  {label:'Step 3 — Reflect',color:'var(--org)',content:`
+    <h3 style="color:var(--org)">Reflect — Diagnose the Failures</h3>
+    <p>A "critic" LLM reads the failed examples and their traces and generates a natural-language diagnosis:</p>
+    <pre style="font-size:.82rem"><span class="cm">-- Input to LM_reflect --</span>
+Prompt: <span class="str">"Answer the question."</span>
+Failed: Q: "8 × 7?" → got "54", expected "56"
+        Q: "23 × 4?" → got "82", expected "92"
+<span class="cm">-- LM_reflect diagnosis --</span>
+<span class="str">"The prompt does not instruct the model to show its multiplication work.
+Recommendation: add 'show your calculation step by step'."</span></pre>
+    <p>This diagnosis <strong>d</strong> is the "actionable" part of Actionable Side Information.</p>`},
+  {label:'Step 4 — Mutate',color:'var(--grn)',content:`
+    <h3 style="color:var(--grn)">Mutate — Generate Improved Candidate</h3>
+    <p>A "fixer" LLM takes the original prompt and the diagnosis and produces a new prompt θ':</p>
+    <pre style="font-size:.82rem"><span class="cm">-- Input to LM_mutate --</span>
+Original: <span class="str">"Answer the question."</span>
+Diagnosis: <span class="str">"add step-by-step calculation instruction"</span>
+<span class="cm">-- Output: θ' --</span>
+<span class="str">"Answer the question. Show your work by breaking down
+the calculation into individual steps."</span></pre>
+    <div class="concept green"><div class="concept-label">Multiple mutations</div>GEPA can generate N variants of θ' from the same diagnosis. All variants are evaluated and the best ones enter the archive.</div>`},
+  {label:'Step 5 — Archive Update',color:'var(--lav)',content:`
+    <h3 style="color:var(--lav)">Update the Pareto Archive</h3>
+    <p>The new candidate θ' is evaluated on <em>all</em> objectives. Then the archive is updated:</p>
+    <ol style="color:var(--dim);margin-left:20px;line-height:2.2"><li><strong style="color:var(--txt)">Add θ' to the archive tentatively</strong></li><li><strong style="color:var(--txt)">Remove any θ that is dominated by θ'</strong></li><li><strong style="color:var(--txt)">If θ' is dominated by something in the archive</strong>, discard θ'</li></ol>
+    <p>The archive grows or stays the same — it never gets worse. The loop repeats until a stopping condition is met.</p>
+    <div class="concept"><div class="concept-label">Stopping conditions</div>Max iterations reached &nbsp;|&nbsp; Budget (max LLM calls) exhausted &nbsp;|&nbsp; No improvement in last N iterations</div>`}
+];
+let gepaStep=0;
+function buildGepaStepper(){
+  const dotsEl=document.getElementById('gepa-dots'), panelsEl=document.getElementById('gepa-panels');
+  gepaSteps.forEach((s,i)=>{
+    const dot=document.createElement('div');
+    dot.className='step-dot'+(i===0?' active':'');
+    dot.title=s.label; dot.onclick=()=>{gepaStep=i;updateGepaStepper();};
+    dotsEl.appendChild(dot);
+    const panel=document.createElement('div');
+    panel.className='step-panel icard'+(i===0?' active':'');
+    panel.style.borderColor=s.color;
+    panel.innerHTML=`<div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin-bottom:8px">Step ${i} of ${gepaSteps.length-1} &mdash; ${s.label}</div>${s.content}`;
+    panelsEl.appendChild(panel);
+  });
+}
+function updateGepaStepper(){
+  document.querySelectorAll('#gepa-dots .step-dot').forEach((d,i)=>{
+    d.classList.remove('active','done');
+    if(i===gepaStep)d.classList.add('active');
+    else if(i<gepaStep)d.classList.add('done');
+  });
+  document.querySelectorAll('#gepa-panels .step-panel').forEach((p,i)=>p.classList.toggle('active',i===gepaStep));
+}
+function gepaNext(){if(gepaStep<gepaSteps.length-1){gepaStep++;updateGepaStepper();}}
+function gepaPrev(){if(gepaStep>0){gepaStep--;updateGepaStepper();}}
+
+/* === MATH: REFLECT/MUTATE DEMO === */
+const scenarios=[
+  {prompt:'Answer the question.',
+   trace:'Q: "8 × 7?" → "54"  (expected "56")\nQ: "23 × 4?" → "82"  (expected "92")\nQ: "17 × 6?" → "99"  (expected "102")',
+   diag:'The prompt has no instruction to show work.\nWithout step-by-step computation the model\nmakes single-digit carry errors.\nFix: add "show calculation step by step".',
+   mutated:'Answer the question.\nShow your work by writing out each step of\nthe calculation. For multiplication, break\nit down: (A × B) = (A × units) + (A × tens).'},
+  {prompt:'Answer the question in English.',
+   trace:'Q: "Translate \'hello\'"  → "hola"  (expected "bonjour")\nQ: "Translate \'goodbye\'" → "adiós" (expected "au revoir")\nQ: "Translate \'thank you\'"→"danke" (expected "merci")',
+   diag:'The prompt says "English" but the task is to\ntranslate TO French. The model is translating\nto random other languages.\nFix: specify the target language clearly.',
+   mutated:'Translate the given word or phrase into French.\nOutput only the French translation, nothing else.'},
+  {prompt:'Answer the question thoroughly.',
+   trace:'Q: "What color is the sky?"\n  → 847-word essay on atmospheric scattering\n     (expected: "Blue")\nQ: "Is water wet?"\n  → 1,200-word philosophical analysis\n     (expected: "Yes")',
+   diag:'"Thoroughly" triggers excessive verbosity.\nOutputs are hundreds of words for one-word answers.\nFix: instruct for conciseness and match response\nlength to question complexity.',
+   mutated:'Answer the question clearly and concisely.\nMatch your response length to the complexity\nof the question. Simple questions need\none-sentence answers.'}
+];
+let currentScenario=0;
+function setScenario(idx){
+  currentScenario=idx;
+  document.querySelectorAll('#scenario-btns .btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  const s=scenarios[idx];
+  document.getElementById('reflect-prompt').textContent=s.prompt;
+  document.getElementById('reflect-trace').textContent=s.trace;
+  document.getElementById('reflect-result').style.display='none';
+  document.getElementById('mutate-result').style.display='none';
+}
+function runReflect(){
+  const s=scenarios[currentScenario];
+  document.getElementById('reflect-diag').textContent=s.diag;
+  document.getElementById('reflect-result').style.display='block';
+  document.getElementById('mutate-result').style.display='none';
+}
+function runMutate(){
+  document.getElementById('mutate-prompt').textContent=scenarios[currentScenario].mutated;
+  document.getElementById('mutate-result').style.display='block';
+}
+
+/* === MATH: ARCHIVE ANIMATION === */
+const archiveCandidates=[
+  {x:.4,y:.4,label:'θ₀'},{x:.6,y:.35,label:'θ₁'},{x:.55,y:.6,label:'θ₂'},
+  {x:.5,y:.5,label:'θ₃'},{x:.75,y:.45,label:'θ₄'},{x:.7,y:.7,label:'θ₅'},
+  {x:.85,y:.55,label:'θ₆'},{x:.6,y:.82,label:'θ₇'}
+];
+let archiveShown=0, archiveState=[];
+function archiveReset(){archiveShown=0;archiveState=[];document.getElementById('archive-msg').textContent='';drawArchive();}
+function archiveStep(){
+  if(archiveShown>=archiveCandidates.length)return;
+  const newPt=archiveCandidates[archiveShown++];
+  archiveState.push({...newPt,dominated:false});
+  for(let i=0;i<archiveState.length;i++) archiveState[i].dominated=false;
+  for(let i=0;i<archiveState.length;i++)
+    for(let j=0;j<archiveState.length;j++){
+      if(i===j)continue;
+      const a=archiveState[i],b=archiveState[j];
+      if(b.x>=a.x&&b.y>=a.y&&(b.x>a.x||b.y>a.y)) archiveState[i].dominated=true;
+    }
+  const dominated=archiveState.filter(p=>p.dominated), optimal=archiveState.filter(p=>!p.dominated);
+  let msg=dominated.length>0?`Added ${newPt.label} — archive has ${optimal.length} Pareto-optimal candidates (${dominated.length} dominated)`:`Added ${newPt.label} — ${optimal.length} Pareto-optimal candidates`;
+  if(archiveShown>=archiveCandidates.length) msg+=' · All candidates added!';
+  document.getElementById('archive-msg').textContent=msg;
+  drawArchive();
+}
+function drawArchive(){
+  const canvas=document.getElementById('archiveCanvas');
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height, PAD=45;
+  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#45475a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,PAD); ctx.lineTo(PAD,H-PAD); ctx.moveTo(PAD,H-PAD); ctx.lineTo(W-PAD,H-PAD); ctx.stroke();
+  ctx.fillStyle='#a6adc8'; ctx.font='12px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Accuracy →',W/2,H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Conciseness →',0,0); ctx.restore();
+  if(archiveState.length===0){ctx.fillStyle='#45475a';ctx.font='13px Segoe UI';ctx.textAlign='center';ctx.fillText('Click "Add next candidate" to start',W/2,H/2);return;}
+  const optimal=archiveState.filter(p=>!p.dominated).sort((a,b)=>a.x-b.x);
+  if(optimal.length>1){
+    ctx.strokeStyle='rgba(180,190,254,0.3)'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(PAD,toCanvasY(optimal[0].y,H,PAD));
+    for(const p of optimal) ctx.lineTo(toCanvasX(p.x,W,PAD),toCanvasY(p.y,H,PAD));
+    ctx.lineTo(W-PAD,toCanvasY(optimal[optimal.length-1].y,H,PAD));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  archiveState.forEach(p=>{
+    const cx=toCanvasX(p.x,W,PAD),cy=toCanvasY(p.y,H,PAD);
+    ctx.beginPath(); ctx.arc(cx,cy,p.dominated?6:9,0,Math.PI*2);
+    ctx.fillStyle=p.dominated?'#45475a':'#b4befe'; ctx.fill();
+    ctx.strokeStyle=p.dominated?'#585b70':'#cdd6f4'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle=p.dominated?'#6c7086':'#cdd6f4';
+    ctx.font=p.dominated?'10px Segoe UI':'bold 10px Segoe UI';
+    ctx.textAlign='center'; ctx.fillText(p.label,cx,cy-14);
+  });
+}
+
+/* === MATH: CONVERGENCE CHART === */
+let genData={acc:[],con:[],gen:0};
+const accCurve=[.38,.45,.54,.61,.67,.72,.76,.80,.83,.86,.88];
+const conCurve=[.70,.68,.65,.67,.69,.70,.72,.73,.74,.75,.75];
+function resetConvergence(){genData={acc:[],con:[],gen:0};document.getElementById('gen-label').textContent='Generation 0 — click to start';drawConvergence();}
+function runGeneration(){
+  if(genData.gen>=accCurve.length-1){document.getElementById('gen-label').textContent='Converged! Archive is optimal.';return;}
+  genData.acc.push(accCurve[genData.gen]);genData.con.push(conCurve[genData.gen]);genData.gen++;
+  document.getElementById('gen-label').textContent=`Generation ${genData.gen-1} — Accuracy: ${(accCurve[genData.gen-1]*100).toFixed(0)}%  |  Conciseness: ${(conCurve[genData.gen-1]*100).toFixed(0)}%`;
+  drawConvergence();
+}
+function drawConvergence(){
+  const canvas=document.getElementById('convergenceCanvas');
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height, PAD=50;
+  ctx.fillStyle='#11111b'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#45475a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,PAD); ctx.lineTo(PAD,H-PAD); ctx.moveTo(PAD,H-PAD); ctx.lineTo(W-PAD,H-PAD); ctx.stroke();
+  ctx.fillStyle='#a6adc8'; ctx.font='12px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('Generation →',W/2,H-10);
+  ctx.save(); ctx.translate(14,H/2); ctx.rotate(-Math.PI/2); ctx.fillText('Score',0,0); ctx.restore();
+  [.25,.5,.75,1.0].forEach(v=>{
+    const y=H-PAD-v*(H-2*PAD);
+    ctx.strokeStyle='#2e2e4e'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+    ctx.fillStyle='#6c7086'; ctx.font='10px Segoe UI'; ctx.textAlign='right'; ctx.fillText((v*100).toFixed(0)+'%',PAD-5,y+4);
+  });
+  if(genData.acc.length<2){
+    if(genData.acc.length===0){ctx.fillStyle='#45475a';ctx.font='13px Segoe UI';ctx.textAlign='center';ctx.fillText('Click "Run next generation" to start',W/2,H/2);}
+    return;
+  }
+  const maxGen=accCurve.length-1, xStep=(W-2*PAD)/maxGen;
+  const drawLine=(data,color)=>{
+    ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=2.5;
+    data.forEach((v,i)=>{const x=PAD+i*xStep,y=H-PAD-v*(H-2*PAD);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+    ctx.stroke();
+    data.forEach((v,i)=>{const x=PAD+i*xStep,y=H-PAD-v*(H-2*PAD);ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();});
+  };
+  drawLine(genData.acc,'#89b4fa'); drawLine(genData.con,'#a6e3a1');
+  ctx.fillStyle='#89b4fa'; ctx.fillRect(W-PAD-120,PAD,14,14);
+  ctx.fillStyle='#a6adc8'; ctx.font='11px Segoe UI'; ctx.textAlign='left'; ctx.fillText('Accuracy',W-PAD-100,PAD+11);
+  ctx.fillStyle='#a6e3a1'; ctx.fillRect(W-PAD-120,PAD+22,14,14); ctx.fillText('Conciseness',W-PAD-100,PAD+33);
+}
+
+/* === MATH: GEPA BAR === */
+function showGepaBar(){document.getElementById('gepa-eff-bar').style.width='2.9%';}
+
+/* === INIT === */
+buildGepaStepper();
+setScenario(0);
+drawPareto();
+drawArchive();
+drawConvergence();
+</script>
 </body>
 </html>
