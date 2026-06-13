@@ -3,255 +3,596 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BO-Tuned Cache Eviction — Problem Launch</title>
+<title>Cache Eviction: Recency vs. Frequency</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg-page: #08090a; --bg-panel: #0f1011; --bg-surface: #191a1b; --text-primary: #f7f8f8; --text-secondary: #d0d6e0; --text-tertiary: #8a8f98; --text-muted: #62666d; --accent: #7170ff; --accent-bg: #5e6ad2; --border-subtle: rgba(255,255,255,0.05); --border-standard: rgba(255,255,255,0.08); --green: #10b981; }
+  :root {
+    --bg-page: #08090a;
+    --bg-panel: #0f1011;
+    --bg-surface: #191a1b;
+    --bg-code: #0d0e10;
+    --text-primary: #f7f8f8;
+    --text-secondary: #d0d6e0;
+    --text-tertiary: #8a8f98;
+    --text-muted: #62666d;
+    --accent: #7170ff;
+    --accent-bg: #5e6ad2;
+    --accent-dim: rgba(94,106,210,0.12);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.1);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.1);
+    --border-subtle: rgba(255,255,255,0.05);
+    --border-standard: rgba(255,255,255,0.08);
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-page); color: var(--text-secondary); line-height: 1.6; font-feature-settings: 'cv01', 'ss03'; }
-  .container { max-width: 720px; margin: 0 auto; padding: 2em 1em 4em; }
-  h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.704px; color: var(--text-primary); margin-bottom: 0.3em; }
-  h2 { font-size: 1.25rem; font-weight: 590; letter-spacing: -0.24px; color: var(--text-primary); margin: 1.5em 0 0.5em; }
-  h3 { font-size: 1rem; font-weight: 500; color: var(--text-primary); margin: 1em 0 0.3em; }
-  p { margin: 0.5em 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-feature-settings: 'cv01', 'ss03';
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 2em 1em 5em; }
+
+  /* Typography */
+  h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.704px; color: var(--text-primary); margin-bottom: 0.2em; }
+  h2 { font-size: 1.3rem; font-weight: 590; letter-spacing: -0.24px; color: var(--text-primary); margin: 2em 0 0.6em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border-standard); }
+  h3 { font-size: 1.05rem; font-weight: 500; color: var(--text-primary); margin: 1.5em 0 0.4em; }
+  p { margin: 0.6em 0; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { color: #828fff; }
+  strong { color: var(--text-primary); font-weight: 500; }
+  em { color: var(--text-tertiary); }
+  code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.875em; background: rgba(255,255,255,0.06); padding: 0.15em 0.4em; border-radius: 4px; }
   .meta { font-size: 0.85em; color: var(--text-muted); margin-bottom: 1.5em; }
-  .ref-card { background: var(--bg-surface); border: 1px solid var(--border-standard); border-radius: 8px; padding: 1em; margin: 0.8em 0; }
-  .ref-card a { display: block; padding: 0.3em 0; font-size: 0.95em; }
-  .ref-card .desc { font-size: 0.8em; color: var(--text-tertiary); }
-  .skill-tag { display: inline-block; padding: 0.2em 0.7em; border-radius: 4px; font-size: 0.8em; margin: 0.15em; }
-  .skill-tag.bo { background: rgba(94,106,210,0.25); color: #aab4ff; border: 1px solid rgba(94,106,210,0.3); }
-  .skill-tag.swe { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
-  .interactive-flow { background: var(--bg-panel); border: 1px solid var(--border-standard); border-radius: 10px; padding: 1.5em; margin: 1.5em 0; }
-  .flow-controls { display: flex; flex-wrap: wrap; gap: 0.4em; margin-bottom: 1em; }
-  .flow-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); color: var(--text-secondary); padding: 0.4em 0.8em; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.8em; font-weight: 500; transition: all 0.2s; }
-  .flow-btn:hover { background: rgba(255,255,255,0.08); }
-  .flow-btn.active { background: var(--accent-bg); border-color: var(--accent); color: #fff; }
-  .flow-content { display: none; margin-top: 0.5em; padding: 1em; background: rgba(0,0,0,0.3); border-radius: 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.82em; line-height: 1.7; }
-  .flow-content.visible { display: block; }
-  .sharp-q { background: rgba(94,106,210,0.08); border-left: 4px solid var(--accent-bg); padding: 1em; margin: 1.5em 0; border-radius: 0 8px 8px 0; cursor: pointer; }
-  .sharp-a { display: none; padding: 0.8em 1em; background: rgba(0,0,0,0.3); border-radius: 6px; margin-top: 0.3em; font-size: 0.9em; }
+
+  /* Ref boxes */
+  .ref-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-standard);
+    border-radius: 8px;
+    padding: 0.8em 1em;
+    margin: 1em 0;
+    font-size: 0.9em;
+  }
+  .ref-box .label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.2em; }
+  .ref-box a { display: inline-block; }
+  .ref-box .note { font-size: 0.85em; color: var(--text-tertiary); margin-top: 0.2em; }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border-standard);
+    border-radius: 8px;
+    padding: 1em 1.2em;
+    margin: 0.8em 0;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.8em;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .kw { color: #c792ea; }
+  .code-block .fn { color: #82aaff; }
+  .code-block .str { color: #c3e88d; }
+  .code-block .num { color: #f78c6c; }
+  .code-block .op { color: #89ddff; }
+
+  /* Output blocks */
+  .output-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 0.8em 1em;
+    margin: 0 0 1.2em 0;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.78em;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-tertiary);
+  }
+
+  /* Info cards */
+  .insight {
+    background: var(--accent-dim);
+    border-left: 3px solid var(--accent-bg);
+    padding: 0.8em 1em;
+    margin: 1em 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9em;
+  }
+  .insight strong { color: var(--accent); }
+
+  .failure {
+    background: var(--red-dim);
+    border-left: 3px solid var(--red);
+    padding: 0.8em 1em;
+    margin: 1em 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9em;
+  }
+
+  .result-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8em;
+    margin: 0.8em 0;
+  }
+  .result-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-standard);
+    border-radius: 6px;
+    padding: 0.6em 0.8em;
+    text-align: center;
+  }
+  .result-item .label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+  .result-item .value { font-size: 1.4rem; font-weight: 600; color: var(--text-primary); margin: 0.1em 0; }
+  .result-item .value.green { color: var(--green); }
+  .result-item .value.amber { color: var(--amber); }
+  .result-item .value.red { color: var(--red); }
+
+  .trace-line { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
+
+  /* Collapsible theorem */
+  .collapse-box { margin: 0.8em 0; }
+  .collapse-header {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-standard);
+    border-radius: 6px;
+    padding: 0.5em 0.8em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+    user-select: none;
+  }
+  .collapse-header:hover { background: rgba(255,255,255,0.04); }
+  .collapse-arrow { transition: transform 0.2s; font-size: 0.8em; }
+  .collapse-arrow.open { transform: rotate(90deg); }
+  .collapse-body {
+    display: none;
+    padding: 0.8em 1em;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-subtle);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    font-size: 0.9em;
+  }
+  .collapse-body.open { display: block; }
+
+  hr { border: none; border-top: 1px solid var(--border-standard); margin: 2.5em 0; }
+
+  .pill {
+    display: inline-block; padding: 0.2em 0.7em; border-radius: 4px;
+    font-size: 0.8em; margin: 0.15em;
+    background: rgba(94,106,210,0.2); color: #aab4ff; border: 1px solid rgba(94,106,210,0.25);
+  }
+  .pill.green { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+  .pill.amber { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+
+  /* Questions */
+  .sharp-q {
+    background: rgba(94,106,210,0.08);
+    border-left: 4px solid var(--accent-bg);
+    padding: 1em;
+    margin: 1.5em 0;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .sharp-a { display: none; padding: 1em; background: rgba(0,0,0,0.3); border-radius: 6px; margin-top: 0.3em; font-size: 0.9em; line-height: 1.6; }
   .sharp-a.visible { display: block; }
-  hr { border: none; border-top: 1px solid var(--border-standard); margin: 2em 0; }
-  .back-link { display: inline-block; margin-bottom: 1em; font-size: 0.9em; color: var(--accent); }
+
+  .back-link { display: inline-block; margin-bottom: 1.5em; font-size: 0.9em; color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .result-card { grid-template-columns: 1fr; }
+    h1 { font-size: 1.5rem; }
+  }
+
+  /* Table */
+  .trace-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75em;
+    margin: 0.6em 0;
+  }
+  .trace-table th {
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    padding: 0.3em 0.5em;
+    text-align: left;
+    border-bottom: 1px solid var(--border-standard);
+    font-weight: 500;
+  }
+  .trace-table td {
+    padding: 0.2em 0.5em;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .trace-table tr.hit td { background: var(--green-dim); }
+  .trace-table tr.miss td { background: var(--red-dim); }
 </style>
 </head>
 <body>
 <div class="container">
-  <a class="back-link" href="../../index.html">← Learning Hub</a>
 
-  <h1>BO-Tuned Cache Eviction</h1>
-  <p class="meta">Tutorial 1/8 · Problem Launch · Light (~1.5 hrs)</p>
+<a class="back-link" href="../../index.html">← Learning Hub</a>
 
-  <p style="font-size:1.05em; color:var(--text-primary);">
-    Production caches use hand-tuned eviction policies like LRU, LFU, or ARC. But every workload is different. What if a Bayesian optimizer could learn the optimal eviction strategy from request traces — and adapt as the workload shifts?
-  </p>
+<h1>Cache Eviction: Recency vs. Frequency</h1>
+<p class="meta">Tutorial 1/8 · The core tension · Light (~1.5 hrs)</p>
 
-  <div style="margin:1em 0;">
-    <span class="skill-tag bo">Bayesian Optimization</span>
-    <span class="skill-tag swe">Caching Systems</span>
-    <span class="skill-tag swe">System Design</span>
-    <span class="skill-tag swe">MLOps</span>
+<p style="font-size:1.05em; color:var(--text-primary);">
+A cache is a small, fast storage layer that holds a subset of data so future requests can be served faster. Since the cache is smaller than the backing store, it must <em>evict</em> items when it runs out of room. The eviction policy — <strong>which item to kick out</strong> — is the single most important design decision for cache performance.
+</p>
+
+<p>Every eviction policy faces the same fundamental question using only two signals:</p>
+
+<div style="display:flex; gap:1em; margin:1em 0; flex-wrap:wrap;">
+  <div style="flex:1; min-width:200px; background:var(--bg-surface); border:1px solid var(--border-standard); border-radius:8px; padding:0.8em 1em; text-align:center;">
+    <div style="font-size:1.8rem; margin-bottom:0.2em;">⏱️</div>
+    <strong style="font-size:1rem;">Recency</strong>
+    <div style="font-size:0.8em; color:var(--text-tertiary); margin-top:0.2em;">When was this item<br>last accessed?</div>
   </div>
-
-  <h2>References</h2>
-  <div class="ref-card">
-    <a href="https://www.asynctote.com">asynctote — Caching &amp; System Design Fundamentals</a>
-    <div class="desc">Use this for the fundamentals layer: LRU, LFU, consistent hashing, cache invalidation patterns</div>
+  <div style="flex:1; min-width:200px; background:var(--bg-surface); border:1px solid var(--border-standard); border-radius:8px; padding:0.8em 1em; text-align:center;">
+    <div style="font-size:1.8rem; margin-bottom:0.2em;">📊</div>
+    <strong style="font-size:1rem;">Frequency</strong>
+    <div style="font-size:0.8em; color:var(--text-tertiary); margin-top:0.2em;">How often is this item<br>accessed overall?</div>
   </div>
-  <div class="ref-card">
-    <a href="https://github.com/LMCache/LMCache">LMCache — 8.7k★ open-source KV cache layer</a>
-    <div class="desc">Real project this problem connects to. Their cache engine needs smarter eviction policies.</div>
+</div>
+
+<p>This tutorial is about <em>why</em> those two signals lead to different policies, when each one fails, and how Bayesian optimization can learn to balance them automatically.</p>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>1. What is a Cache?</h2>
+<!-- ============================================================ -->
+
+<p>Imagine a library desk with room for 4 books (the cache). The library basement has thousands of books (the backing store). Fetching a book from the basement takes 5 minutes. Fetching from the desk takes 10 seconds.</p>
+
+<p>If a patron requests a book that's on the desk, that's a <strong>hit</strong> — 10 seconds. If it's in the basement, that's a <strong>miss</strong> — 5 minutes. The goal of a cache is to maximize hits by keeping the most <em>useful</em> items on the desk.</p>
+
+<div class="insight">
+<strong>Key insight:</strong> An eviction policy is a bet about the future. You keep items you think will be requested again, and evict items you think won't. Different policies make different bets.
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>2. A Concrete Trace</h2>
+<!-- ============================================================ -->
+
+<p>Let's work with a concrete sequence of requests (a <em>trace</em>). Throughout this tutorial, we'll run this trace through different policies and compare hit rates:</p>
+
+<div class="code-block">Trace: [
+  'A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'D',
+  'D', 'E', 'A', 'F', 'A', 'G', 'A', 'H', 'A', 'I'
+]
+Capacity: 3</div>
+
+<p>This trace has a mix of <strong>temporal locality</strong> (A, B, C repeat in bursts — like checking a dashboard every few seconds) and <strong>one-time items</strong> (E, F, G, H, I appear once — like loading an article you'll never revisit).</p>
+
+<p>The capacity is 3 — only 3 items fit in the cache at once. Let's see how different policies fare.</p>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>3. LRU: The Recency Heuristic</h2>
+<!-- ============================================================ -->
+
+<h3>The Idea</h3>
+
+<p><strong>Least Recently Used (LRU)</strong> evicts the item that hasn't been accessed for the longest time. It bets that <em>recently accessed items are likely to be accessed again</em> — this is <strong>temporal locality</strong>, one of the most reliable patterns in real workloads.</p>
+
+<p>Think of a stack of papers on your desk: you put each paper you use on top. When the stack gets too tall, you throw away the paper at the bottom — the one you haven't touched in the longest time. That's LRU.</p>
+
+<h3>The Implementation</h3>
+
+<p>The standard implementation uses a hash map (for O(1) lookup) plus a doubly-linked list (for O(1) movement). Here's a simpler version using a dictionary with access-order tracking:</p>
+
+<div class="code-block"><span class="comment"># LRU: evict the oldest-accessed item</span>
+def lru_hit_rate(trace, capacity):
+    cache = {}       <span class="comment"># key -> access order counter</span>
+    hits = 0
+    tick = 0
+
+    for key in trace:
+        <span class="kw">if</span> key in cache:
+            hits += 1
+            cache[key] = tick  <span class="comment"># update recency</span>
+        <span class="kw">else</span>:
+            <span class="kw">if</span> len(cache) >= capacity:
+                <span class="comment"># Find the key with smallest tick (oldest)</span>
+                oldest = min(cache, key=<span class="kw">lambda</span> k: cache[k])
+                <span class="kw">del</span> cache[oldest]
+            cache[key] = tick
+        tick += 1
+
+    <span class="kw">return</span> hits / len(trace)</div>
+
+<h3>Walkthrough — Step by Step</h3>
+
+<p>Let's run it. Each MISS-fill adds an item to the cache (cold start). Once full, MISS-evict kicks out the oldest. A HIT refreshes the recency.</p>
+
+<div class="output-block">  Request A: MISS-fill | Cache: {A: 0}
+  Request B: MISS-fill | Cache: {A: 0, B: 1}
+  Request C: MISS-fill | Cache: {A: 0, B: 1, C: 2}
+  Request A: HIT       | Cache: {B: 1, C: 2, A: 3}
+  Request B: HIT       | Cache: {C: 2, A: 3, B: 4}
+  Request C: HIT       | Cache: {A: 3, B: 4, C: 5}
+  Request A: HIT       | Cache: {B: 4, C: 5, A: 6}
+  Request B: HIT       | Cache: {C: 5, A: 6, B: 7}
+  Request C: HIT       | Cache: {A: 6, B: 7, C: 8}
+  Request D: MISS-evict| Cache: {B: 7, C: 8, D: 9}
+  Request D: HIT       | Cache: {B: 7, C: 8, D: 9}
+  Request E: MISS-evict| Cache: {C: 8, D: 9, E: 10}
+  Request A: HIT       | Cache: {D: 9, E: 10, A: 11}
+  Request F: MISS-evict| Cache: {E: 10, A: 11, F: 12}
+  Request A: HIT       | Cache: {E: 10, F: 12, A: 13}
+  Request G: MISS-evict| Cache: {F: 12, A: 13, G: 14}
+  Request A: HIT       | Cache: {F: 12, G: 14, A: 15}
+  Request H: MISS-evict| Cache: {G: 14, A: 15, H: 16}
+  Request A: HIT       | Cache: {G: 14, H: 16, A: 17}
+  Request I: MISS-evict| Cache: {H: 16, A: 17, I: 18}</div>
+
+<div class="result-card">
+  <div class="result-item">
+    <div class="label">LRU Hit Rate</div>
+    <div class="value green">8 / 20</div>
+    <div style="font-size:0.75em; color:var(--text-muted);">= 40%</div>
   </div>
-  <div class="ref-card">
-    <a href="https://arxiv.org/abs/2305.02563">"Adaptive Cache Policy with RL" — arXiv 2305.02563</a>
-    <div class="desc">Prior work using RL for cache eviction. BO has advantages: sample efficiency, uncertainty estimates.</div>
+</div>
+
+<h3>When LRU Works</h3>
+
+<p>LRU shines when the workload has <strong>strong temporal locality</strong> — the same items are requested in bursts. In a web server serving a live dashboard that refreshes every 5 seconds with the same data, LRU keeps that data hot.</p>
+
+<h3>When LRU Fails: The Scan Problem</h3>
+
+<p>LRU's fatal weakness is a <strong>scan</strong> — a sequential pass through many distinct items. Each new item evicts the previously hot items from the cache, even though those hot items will be needed again right after the scan ends.</p>
+
+<div class="failure">
+<strong>Scan failure example:</strong> If a cache holds 4 popular items (A, B, C, D) and a scan of 8 one-time items (E, F, G, H, I, J, K, L) passes through, LRU will evict A, B, C, D one by one and replace them with E–L. When the next request comes for A — miss! LRU just flushed your working set.
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>4. LFU: The Frequency Heuristic</h2>
+<!-- ============================================================ -->
+
+<h3>The Idea</h3>
+
+<p><strong>Least Frequently Used (LFU)</strong> evicts the item accessed the fewest times. It bets that <em>frequently accessed items are valuable</em> — if an item has been popular in the past, it will likely stay popular.</p>
+
+<h3>The Implementation</h3>
+
+<div class="code-block"><span class="comment"># LFU: evict the least-frequently-accessed item</span>
+def lfu_hit_rate(trace, capacity):
+    cache = {}       <span class="comment"># key -> frequency in cache</span>
+    freqs = {}       <span class="comment"># key -> global frequency</span>
+    hits = 0
+
+    <span class="kw">for</span> key <span class="kw">in</span> trace:
+        freqs[key] = freqs.get(key, 0) + 1
+
+        <span class="kw">if</span> key <span class="kw">in</span> cache:
+            hits += 1
+            cache[key] += 1      <span class="comment"># increment cached freq</span>
+        <span class="kw">else</span>:
+            <span class="kw">if</span> len(cache) >= capacity:
+                <span class="comment"># Find the key with smallest frequency</span>
+                lfu_item = min(cache, key=<span class="kw">lambda</span> k: cache[k])
+                <span class="kw">del</span> cache[lfu_item]
+            cache[key] = freqs[key]  <span class="comment"># initial freq</span>
+
+    <span class="kw">return</span> hits / len(trace)</div>
+
+<h3>When LFU Beats LRU: Zipf Workloads</h3>
+
+<p>Many real access patterns follow a <strong>Zipf distribution</strong>: the top 20% of items account for 80% of requests. Think search engine queries, news article visits, or YouTube views. LFU naturally keeps this hot set alive because those items accumulate high frequencies.</p>
+
+<div class="ref-box">
+  <div class="label">Reference: Wikipedia</div>
+  <a href="https://en.wikipedia.org/wiki/Zipf's_law">Zipf's law</a>
+  <div class="note">Many natural access patterns (web pages, words in text, file accesses) follow Zipf-like distributions. This is LFU's natural habitat.</div>
+</div>
+
+<p>Let's compare on a Zipf-like trace — 50 requests where 80% go to 4 hot items (A,B,C,D) and 20% go to 12 cold items:</p>
+
+<div class="result-card">
+  <div class="result-item">
+    <div class="label">LRU (Zipf trace)</div>
+    <div class="value amber">50%</div>
   </div>
-  <div class="ref-card">
-    <a href="https://en.wikipedia.org/wiki/Cache_replacement_policies">Wikipedia — Cache Replacement Policies</a>
-    <div class="desc">Reference for LRU, LFU, ARC, 2Q, FIFO, and the theory behind each.</div>
+  <div class="result-item">
+    <div class="label">LFU (Zipf trace)</div>
+    <div class="value green">66%</div>
   </div>
+</div>
 
-  <h2>The Problem</h2>
-  <p>A cache has finite capacity. When a new item arrives and the cache is full, something must be evicted. The eviction policy decides what.</p>
-  <p>Hand-tuned policies (LRU, LFU, ARC) make assumptions about the workload: LRU assumes recent access predicts future access, LFU assumes frequency predicts future access. But real workloads are <em>non-stationary</em> — access patterns shift throughout the day.</p>
-  <p><strong>Can we frame cache eviction as a Bayesian optimization problem?</strong> Treat the cache's hit rate as a black-box function <code>f(policy_params, workload_slice)</code> and search for the policy that maximizes it under shifting workloads.</p>
+<p>LFU wins. It keeps the popular items in cache even when they haven't been accessed in a few ticks, while LRU may temporarily evict a popular item for a less-popular one that happened to arrive recently.</p>
 
-  <h2>Interactive: The Flow of a Cache Miss</h2>
-  <p>Click through each stage to see how a cache miss propagates — and where a BO-optimized policy would intervene.</p>
+<h3>When LFU Fails: Cache Pollution</h3>
 
-  <div class="interactive-flow">
-    <div class="flow-controls">
-      <button class="flow-btn active" data-stage="1">① Request arrives</button>
-      <button class="flow-btn" data-stage="2">② Miss → fetch from origin</button>
-      <button class="flow-btn" data-stage="3">③ Eviction decision</button>
-      <button class="flow-btn" data-stage="4">④ BO-optimized policy</button>
-      <button class="flow-btn" data-stage="5">⑤ Adapt over time</button>
-    </div>
+<p>LFU's weakness is <strong>frequency staleness</strong>. Once an item has built up a high access count, it stays in cache even after its popularity has died. This is called <strong>cache pollution</strong> — the cache is full of previously-hot items that no longer attract requests.</p>
 
-    <div class="flow-content visible" data-stage="1">
-┌─ Request ─────────────────────────────────────────────────┐
-│  GET /models/llama-7b/token-512                            │
-│  Client: vLLM inference server                             │
-│  Cache key: kv-cache:llama-7b:seq-512                      │
-└───────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─ Cache Lookup ────────────────────────────────────────────┐
-│  Cache state:                                              │
-│  ┌──────┬──────────┬──────────────┬──────────┐             │
-│  │ key  │ freq     │ last_access  │ ttl      │             │
-│  ├──────┼──────────┼──────────────┼──────────┤             │
-│  │ seq_a│ 142      │ 12.3s ago    │ 300s     │             │
-│  │ seq_b│ 89       │ 45.1s ago    │ 120s     │             │
-│  │ seq_c│ 12       │ 2.1s ago     │ 30s      │             │
-│  │ ...  │ ...      │ ...          │ ...      │             │
-│  └──────┴──────────┴──────────────┴──────────┘             │
-│  HIT!  → Return cached tensor (10µs)                       │
-│  MISS! → Go to origin (100ms fetch)                        │
-└───────────────────────────────────────────────────────────┘
-    </div>
+<p>Consider: the morning news cycle (A,B,C,D are hot), then the afternoon cycle (E,F,G,H are hot). LFU still keeps A,B,C,D because they have counts of 10 each. New items E,F,G,H enter with count 1 and get immediately evicted. The cache is <em>polluted</em> with yesterday's news.</p>
 
-    <div class="flow-content" data-stage="2">
-When a MISS happens:
+<div class="insight">
+<strong>Recency has a natural decay mechanism</strong> — an unaccessed item ages out. <strong>Frequency has no such decay</strong> — an old high count stays high forever, making LFU slow to adapt to shifts.
+</div>
 
-┌─ Origin Fetch ────────────────────────────────────────────┐
-│  1. Compute KV tensor for the missing seq                  │
-│  2. Time: ~100-500ms (GPU compute)                         │
-│  3. Tensor size: ~2-8 MB per token position                │
-│  4. Now cache must store this new entry                    │
-└───────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─ Cache Full? ─────────────────────────────────────────────┐
-│  If cache has free slots:  → Insert new entry, done.       │
-│                                                             │
-│  If cache is at capacity:                                   │
-│    → Must EVICT an existing entry                           │
-│    → WHICH ONE gets evicted?                                │
-│    → This is the policy decision                            │
-└───────────────────────────────────────────────────────────┘
-    </div>
+<hr>
 
-    <div class="flow-content" data-stage="3">
-Eviction policies answer: "Who gets kicked out?"
+<!-- ============================================================ -->
+<h2>5. The Fundamental Tension</h2>
+<!-- ============================================================ -->
 
-┌─ Policy Comparison ───────────────────────────────────────┐
-│                                                             │
-│  LRU: Evict the oldest-accessed entry                       │
-│    Assumes: recently used → will be reused                  │
-│    Works for: recency-heavy workloads                       │
-│    Fails when: a burst of one-time requests                 │
-│    flushes the hot cache                                    │
-│                                                             │
-│  LFU: Evict the least-frequently accessed                   │
-│    Assumes: frequency → future importance                   │
-│    Works for: stable popularity distributions               │
-│    Fails when: a once-popular item becomes irrelevant       │
-│    but has high count                                       │
-│                                                             │
-│  ARC: Adaptive — switches between LRU/LFU                   │
-│    based on recent workload patterns                        │
-│    Better than either alone, but still                      │
-│    uses heuristics, not optimization                        │
-│                                                             │
-│  BO-Policy: Learn from trace data (see next stage)          │
-└───────────────────────────────────────────────────────────┘
-    </div>
+<p>The examples above reveal an irreducible trade-off:</p>
 
-    <div class="flow-content" data-stage="4">
-The BO approach frames eviction as optimization:
-
-┌─ BO-Tuned Policy ──────────────────────────────────────────┐
-│                                                              │
-│  Objective: maximize hit_rate(θ, trace)                      │
-│                                                              │
-│  Parameters θ = [α, β, γ, window_size, ...]                  │
-│    α: weight given to recency                                │
-│    β: weight given to frequency                              │
-│    γ: weight given to entry size                             │
-│    window_size: lookback window for stats                    │
-│                                                              │
-│  Score(key) = α · recency(key) + β · frequency(key)          │
-│                        - γ · size(key)                       │
-│                                                              │
-│  Instead of hand-tuning α,β,γ:                               │
-│    → GP surrogate learns the mapping f(θ) → hit_rate         │
-│      over a trace window                                     │
-│    → EI acquisition proposes next θ                          │
-│    → After N evals, the best θ is deployed                   │
-│                                                              │
-│  Warm-start from known-good defaults                         │
-│  (ARC's parameters = starting point)                         │
-└───────────────────────────────────────────────────────────┘
-    </div>
-
-    <div class="flow-content" data-stage="5">
-The beautiful part: workloads drift, and BO adapts.
-
-┌─ Adaptive Loop ────────────────────────────────────────────┐
-│                                                              │
-│  Timeline:                                                   │
-│                                                              │
-│  08:00 — Workload: batch processing jobs                     │
-│          Best policy: LFU-heavy (α=0.2, β=0.7)              │
-│                                                              │
-│  12:00 — Workload: interactive users                         │
-│          Best policy: LRU-heavy (α=0.7, β=0.2)              │
-│                                                              │
-│  18:00 — Workload: mixed (both)                              │
-│          Best policy: balanced (α=0.4, β=0.4)                │
-│                                                              │
-│  Every N minutes: collect trace window,                      │
-│  re-optimize θ on the recent window,                         │
-│  deploy the new policy.                                      │
-│                                                              │
-│  BO's advantage over RL: sample efficiency.                  │
-│  A GP needs ~20-50 evaluations to converge;                  │
-│  RL needs thousands of online interactions.                  │
-│  Less disruption to production traffic.                      │
-└───────────────────────────────────────────────────────────┘
-    </div>
+<div style="display:flex; gap:1em; margin:1em 0; flex-wrap:wrap;">
+  <div style="flex:1; min-width:240px; background:var(--green-dim); border:1px solid rgba(16,185,129,0.2); border-radius:8px; padding:0.8em 1em;">
+    <div style="font-weight:500; margin-bottom:0.3em;">✅ LRU strong when</div>
+    <ul style="margin:0; padding-left:1.2em; font-size:0.85em;">
+      <li>Workload has temporal locality</li>
+      <li>Working set fits in cache</li>
+      <li>Access patterns shift over time</li>
+    </ul>
+    <div style="font-weight:500; margin-top:0.6em; margin-bottom:0.3em;">❌ LRU weak when</div>
+    <ul style="margin:0; padding-left:1.2em; font-size:0.85em;">
+      <li>Scan workload flushes hot cache</li>
+      <li>One-time items dominate</li>
+    </ul>
   </div>
-
-  <h2>The SWE Gaps We'll Fill</h2>
-  <p>To build a POC of this, we need to learn:</p>
-  <ol style="margin:0.8em 0; padding-left:1.5em; color:var(--text-tertiary);">
-    <li style="margin:0.4em 0;"><strong>Caching fundamentals</strong> — LRU, LFU, ARC, 2Q. Implement a minimal LRU in Python. <em>(Sat, Week 1)</em></li>
-    <li style="margin:0.4em 0;"><strong>Distributed cache architecture</strong> — Consistent hashing, replication, fault tolerance. How Redis/Memcached/LMCache work. <em>(Wed, Week 2)</em></li>
-    <li style="margin:0.4em 0;"><strong>Request trace analysis</strong> — Collecting, parsing, and analyzing real cache traces. Feature extraction for the GP model. <em>(Sat, Week 2)</em></li>
-    <li style="margin:0.4em 0;"><strong>BO for systems optimization</strong> — Setting up GP surrogate + EI for the cache problem. <em>(Wed, Week 3)</em></li>
-    <li style="margin:0.4em 0;"><strong>POC: BO-tuned cache simulator</strong> — Compare against LRU, LFU, ARC on synthetic traces. <em>(Sat, Week 3)</em></li>
-    <li style="margin:0.4em 0;"><strong>A/B testing &amp; deployment</strong> — Shadow mode, canary, metrics for ML-tuned system policies. <em>(Wed, Week 4)</em></li>
-  </ol>
-
-  <hr>
-
-  <div class="sharp-q" onclick="this.nextElementSibling.classList.toggle('visible')">
-    ✋ Sharp Question — click to reveal
+  <div style="flex:1; min-width:240px; background:var(--amber-dim); border:1px solid rgba(245,158,11,0.2); border-radius:8px; padding:0.8em 1em;">
+    <div style="font-weight:500; margin-bottom:0.3em;">✅ LFU strong when</div>
+    <ul style="margin:0; padding-left:1.2em; font-size:0.85em;">
+      <li>Zipf-like popularity distribution</li>
+      <li>Item popularity is stable</li>
+      <li>Scans don't pollute (counts stay low)</li>
+    </ul>
+    <div style="font-weight:500; margin-top:0.6em; margin-bottom:0.3em;">❌ LFU weak when</div>
+    <ul style="margin:0; padding-left:1.2em; font-size:0.85em;">
+      <li>Popularity shifts over time</li>
+      <li>Cache pollution from old popular items</li>
+    </ul>
   </div>
-  <div class="sharp-a">
-    <p><strong>You're tasked with designing a BO-tuned cache for LLM inference (KV-cache).</strong></p>
-    <p>The request trace shows a Zipf-like distribution: the top 20% of sequences account for 80% of requests. But every 30 minutes, a batch of ~500 novel sequences arrives (new conversations), which are never seen again.</p>
-    <p><strong>Question:</strong> How would you design the <code>Score(key)</code> function to handle both the Zipf hot set and the novel-arrival bursts? What parameters would you expose to the BO optimizer? Sketch a formula.</p>
-    <p style="color:var(--text-muted); font-size:0.85em; margin-top:1em;"><em>(Think about it — we'll revisit in Saturday's tutorial.)</em></p>
+</div>
+
+<div class="insight">
+<strong>The takeaway:</strong> No single policy is optimal for all workloads. The optimal policy depends on the <em>character of the access pattern</em> — and real workloads change their character over time.
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>6. Belady's Optimal: The Theoretical Ceiling</h2>
+<!-- ============================================================ -->
+
+<p>There's a theoretical upper bound: <strong>Belady's optimal algorithm (OPT)</strong>. It evicts the item that will be used <em>farthest in the future</em>. This achieves the maximum possible hit rate for any given trace.</p>
+
+<p>OPT is impossible in practice — it requires knowledge of future requests. But it serves as a benchmark: any practical policy is measured by how close it gets to OPT.</p>
+
+<div class="collapse-box">
+  <div class="collapse-header" onclick="toggleCollapse(this)">
+    <span>ℹ️ How close do LRU and LFU get to OPT?</span>
+    <span class="collapse-arrow">▶</span>
   </div>
+  <div class="collapse-body">
+    <p>Research shows that on real traces, LRU typically achieves 70–90% of OPT's hit rate. ARC (Adaptive Replacement Cache, which we'll cover in Tutorial 2) gets closer by dynamically switching between LRU and LFU behavior.</p>
+    <p>The gap between a good practical policy and OPT is where Bayesian optimization enters — if we can learn the <em>right balance</em> of recency and frequency from the trace itself, we can close that gap.</p>
+  </div>
+</div>
 
-  <hr>
+<hr>
 
-  <p><strong>Next:</strong> Saturday, Week 1 — Tutorial 2: Implement a minimal LRU in Python. Run it against a synthetic trace. <code>pip install numpy matplotlib</code> ready.</p>
+<!-- ============================================================ -->
+<h2>7. Where Bayesian Optimization Enters</h2>
+<!-- ============================================================ -->
+
+<h3>The Hybrid Score Function</h3>
+
+<p>Instead of picking LRU <em>or</em> LFU, we can combine both signals into a single score and evict the item with the <strong>lowest</strong> score:</p>
+
+<div class="code-block">Score(key) = α · recency_z(key) + β · frequency_z(key)</div>
+
+<p>Where each signal is normalized to [0, 1]:</p>
+
+<div class="code-block">recency_z = 1 − (now − last_accessed) / window_size
+frequency_z = count(key) / max_count_in_cache</div>
+
+<p>The parameters <strong>α</strong> and <strong>β</strong> control the trade-off:</p>
+
+<ul style="margin:0.6em 0; padding-left:1.5em;">
+  <li><code>α = 1, β = 0</code> → pure LRU (recency only)</li>
+  <li><code>α = 0, β = 1</code> → pure LFU (frequency only)</li>
+  <li><code>α = 0.5, β = 0.5</code> → equal weight to both</li>
+</ul>
+
+<h3>Why Hand-Tuning Fails</h3>
+
+<p>You could manually pick α and β for a given workload. But:</p>
+<ul style="margin:0.6em 0; padding-left:1.5em;">
+  <li><strong>Workloads shift over time</strong> — the right α at 8 AM might be wrong at 8 PM</li>
+  <li><strong>There are more knobs</strong> — window_size, min frequency threshold, entry-size weight</li>
+  <li><strong>Each cache serves different traffic</strong> — user-profile cache behaves differently from KV-cache</li>
+</ul>
+
+<h3>BO's Role: Learn (α, β) From Trace Data</h3>
+
+<p>Bayesian optimization treats the cache's <strong>hit rate as a black-box function</strong> of the policy parameters:</p>
+
+<div class="code-block">f(α, β) = hit_rate over a recent trace window</div>
+
+<p>Each evaluation: pick (α, β) → run the policy on the last N requests → measure hit rate. The GP surrogate learns the landscape of f, and an acquisition function (EI) proposes the next (α, β) to try. After ~20–50 evaluations, BO converges to the best parameters for <em>this workload, right now</em>.</p>
+
+<div class="insight">
+<strong>This is the problem we'll solve over the next 6 tutorials.</strong> We'll build a cache simulator, implement the hybrid score policy, collect traces, and train a GP surrogate to find the optimal (α, β) that maximizes hit rate — adapting as the workload shifts.
+</div>
+
+<div class="ref-box">
+  <div class="label">Learn more about BO</div>
+  <a href="https://distill.pub/2020/bayesian-optimization/">Distill: Exploring Bayesian Optimization</a>
+  <div class="note">Interactive tutorial with the gold-mining example — covers GP surrogates, EI, PI, UCB, and Thompson sampling.</div>
+</div>
+
+<div class="ref-box">
+  <div class="label">Production caching reference</div>
+  <a href="https://redis.io/docs/latest/develop/reference/eviction/">Redis: Key Eviction Policies</a>
+  <div class="note">How a real production system implements LRU (via sampling, not perfect ordering) and LFU (via Morris counters for memory efficiency).</div>
+</div>
+
+<div class="ref-box">
+  <div class="label">Modern cache architecture</div>
+  <a href="https://github.com/LMCache/LMCache">LMCache: KV Cache Layer for LLM Inference</a>
+  <div class="note">A real open-source cache layer (8.9k★) for LLM KV tensors. Stores multi-GB tensors across GPU/CPU/SSD tiers. The eviction decision here is about which prefixes to keep in GPU memory — directly analogous to our problem.</div>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>✋ Sharp Question</h2>
+<!-- ============================================================ -->
+
+<div class="sharp-q" onclick="this.nextElementSibling.classList.toggle('visible')">
+  <strong>Click to reveal</strong> — On a Friday evening, a social media platform's traffic shifts from recency-heavy (live feed scrolling) to frequency-heavy (top-posts browsing). What happens to the optimal (α, β) over a 2-hour window? Sketch the adaptation trajectory.
+</div>
+<div class="sharp-a">
+  <p><strong>Solution sketch:</strong></p>
+  <p>At 5 PM during feed scrolling, temporal locality is high — users refresh the same feed every 30 seconds. LRU dominates → <strong>α ≈ 0.8, β ≈ 0.2</strong>.</p>
+  <p>At 6 PM during top-posts browsing, the same small set of viral posts gets millions of views. LFU dominates → <strong>α ≈ 0.2, β ≈ 0.8</strong>.</p>
+  <p>The adaptation trajectory: BO re-optimizes periodically (every N requests). At 5 PM it finds a high-α optimum. At 5:15 PM, α starts dropping as the workload shifts. By 6 PM, β is dominant.</p>
+  <p>The challenge: <strong>lag</strong>. If the workload shifts faster than the re-optimization window, the cache is stuck with stale parameters. One solution: keep multiple GP models at different timescales and ensemble them. Another: use the GP's uncertainty to detect regime changes (when prediction error spikes, re-optimize immediately).</p>
+  <p><em>We'll implement this adaptation loop in Tutorial 5.</em></p>
+</div>
+
+<hr>
+
+<!-- ============================================================ -->
+<h2>Next Up</h2>
+<!-- ============================================================ -->
+
+<p><strong>Saturday, Week 1 — Tutorial 2:</strong> Implementing a production-grade LRU (hash map + doubly-linked list) and LFU (min-heap + hash map). Building a trace replay engine. Comparing policies on synthetic and real traces.</p>
+
+<p>Before then: nothing to install — the code uses only Python stdlib.</p>
+
 </div>
 
 <script>
-document.querySelectorAll('.flow-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.flow-content').forEach(c => c.classList.remove('visible'));
-    btn.classList.add('active');
-    document.querySelector(`.flow-content[data-stage="${btn.dataset.stage}"]`).classList.add('visible');
-  });
-});
+function toggleCollapse(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.collapse-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
 </script>
 </body>
 </html>
