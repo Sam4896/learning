@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Hub — Gauss</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg-page: #08090a; --bg-panel: #0f1011; --bg-surface: #191a1b; --text-primary: #f7f8f8; --text-secondary: #d0d6e0; --text-tertiary: #8a8f98; --text-muted: #62666d; --accent: #7170ff; --accent-bg: #5e6ad2; --border-subtle: rgba(255,255,255,0.05); --border-standard: rgba(255,255,255,0.08); --green: #10b981; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-page); color: var(--text-secondary); line-height: 1.6; font-feature-settings: 'cv01', 'ss03'; }
+  .container { max-width: 720px; margin: 0 auto; padding: 2em 1em 4em; }
+  h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.704px; color: var(--text-primary); margin-bottom: 0.3em; }
+  h2 { font-size: 1.25rem; font-weight: 590; letter-spacing: -0.24px; color: var(--text-primary); margin: 1.5em 0 0.5em; }
+  p { margin: 0.5em 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #828fff; }
+  .meta { font-size: 0.85em; color: var(--text-muted); margin-bottom: 1.5em; }
+  .tagline { font-size: 1.05em; color: var(--text-tertiary); margin-bottom: 2em; }
+  .project-card { background: var(--bg-surface); border: 1px solid var(--border-standard); border-radius: 10px; padding: 1.5em; margin: 1.5em 0; }
+  .project-card h3 { font-size: 1.15rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.3em; }
+  .project-card .desc { color: var(--text-tertiary); font-size: 0.9em; margin: 0.3em 0 0.8em; }
+  .pill { display: inline-block; padding: 0.2em 0.7em; border-radius: 4px; font-size: 0.8em; margin: 0.15em; }
+  .pill.active { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+  .pill.swe { background: rgba(94,106,210,0.15); color: #aab4ff; border: 1px solid rgba(94,106,210,0.2); }
+  hr { border: none; border-top: 1px solid var(--border-standard); margin: 2em 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Learning Hub</h1>
+  <p class="tagline">Project-based learning mentored by <strong>Gauss</strong>. Every 4 weeks, a new open problem at the intersection of Bayesian optimization / information geometry and production SWE.</p>
+
+  <h2>Active Project</h2>
+  <div class="project-card">
+    <h3>BO-Tuned Cache Eviction Policies</h3>
+    <p class="desc">Production caches use hand-tuned policies like LRU, LFU, ARC. Can Bayesian optimization learn a better eviction strategy from request traces — and adapt as the workload shifts?</p>
+    <p style="margin-bottom:0.8em;"><span class="pill active">📘 Tutorial 1/8</span> <span class="pill swe">Bayesian Optimization</span> <span class="pill swe">Caching</span> <span class="pill swe">MLOps</span></p>
+    <p><a href="projects/cache-bo/launch.html">→ Problem Launch</a></p>
+  </div>
+
+  <h2>Past Projects</h2>
+  <p style="color:var(--text-muted);">None yet.</p>
+
+  <hr>
+  <h2>Schedule</h2>
+  <p><strong>Wed</strong> — Light (~1-2 hrs, reading &amp; problem framing)</p>
+  <p><strong>Sat</strong> — Heavy (~2-3 hrs, code &amp; implementation)</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BO-Tuned Cache Eviction — Problem Launch</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg-page: #08090a; --bg-panel: #0f1011; --bg-surface: #191a1b; --text-primary: #f7f8f8; --text-secondary: #d0d6e0; --text-tertiary: #8a8f98; --text-muted: #62666d; --accent: #7170ff; --accent-bg: #5e6ad2; --border-subtle: rgba(255,255,255,0.05); --border-standard: rgba(255,255,255,0.08); --green: #10b981; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg-page); color: var(--text-secondary); line-height: 1.6; font-feature-settings: 'cv01', 'ss03'; }
+  .container { max-width: 720px; margin: 0 auto; padding: 2em 1em 4em; }
+  h1 { font-size: 2rem; font-weight: 500; letter-spacing: -0.704px; color: var(--text-primary); margin-bottom: 0.3em; }
+  h2 { font-size: 1.25rem; font-weight: 590; letter-spacing: -0.24px; color: var(--text-primary); margin: 1.5em 0 0.5em; }
+  h3 { font-size: 1rem; font-weight: 500; color: var(--text-primary); margin: 1em 0 0.3em; }
+  p { margin: 0.5em 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #828fff; }
+  .meta { font-size: 0.85em; color: var(--text-muted); margin-bottom: 1.5em; }
+  .ref-card { background: var(--bg-surface); border: 1px solid var(--border-standard); border-radius: 8px; padding: 1em; margin: 0.8em 0; }
+  .ref-card a { display: block; padding: 0.3em 0; font-size: 0.95em; }
+  .ref-card .desc { font-size: 0.8em; color: var(--text-tertiary); }
+  .skill-tag { display: inline-block; padding: 0.2em 0.7em; border-radius: 4px; font-size: 0.8em; margin: 0.15em; }
+  .skill-tag.bo { background: rgba(94,106,210,0.25); color: #aab4ff; border: 1px solid rgba(94,106,210,0.3); }
+  .skill-tag.swe { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+  .interactive-flow { background: var(--bg-panel); border: 1px solid var(--border-standard); border-radius: 10px; padding: 1.5em; margin: 1.5em 0; }
+  .flow-controls { display: flex; flex-wrap: wrap; gap: 0.4em; margin-bottom: 1em; }
+  .flow-btn { background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); color: var(--text-secondary); padding: 0.4em 0.8em; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.8em; font-weight: 500; transition: all 0.2s; }
+  .flow-btn:hover { background: rgba(255,255,255,0.08); }
+  .flow-btn.active { background: var(--accent-bg); border-color: var(--accent); color: #fff; }
+  .flow-content { display: none; margin-top: 0.5em; padding: 1em; background: rgba(0,0,0,0.3); border-radius: 6px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.82em; line-height: 1.7; }
+  .flow-content.visible { display: block; }
+  .sharp-q { background: rgba(94,106,210,0.08); border-left: 4px solid var(--accent-bg); padding: 1em; margin: 1.5em 0; border-radius: 0 8px 8px 0; cursor: pointer; }
+  .sharp-a { display: none; padding: 0.8em 1em; background: rgba(0,0,0,0.3); border-radius: 6px; margin-top: 0.3em; font-size: 0.9em; }
+  .sharp-a.visible { display: block; }
+  hr { border: none; border-top: 1px solid var(--border-standard); margin: 2em 0; }
+  .back-link { display: inline-block; margin-bottom: 1em; font-size: 0.9em; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-link" href="../../index.html">← Learning Hub</a>
+
+  <h1>BO-Tuned Cache Eviction</h1>
+  <p class="meta">Tutorial 1/8 · Problem Launch · Light (~1.5 hrs)</p>
+
+  <p style="font-size:1.05em; color:var(--text-primary);">
+    Production caches use hand-tuned eviction policies like LRU, LFU, or ARC. But every workload is different. What if a Bayesian optimizer could learn the optimal eviction strategy from request traces — and adapt as the workload shifts?
+  </p>
+
+  <div style="margin:1em 0;">
+    <span class="skill-tag bo">Bayesian Optimization</span>
+    <span class="skill-tag swe">Caching Systems</span>
+    <span class="skill-tag swe">System Design</span>
+    <span class="skill-tag swe">MLOps</span>
+  </div>
+
+  <h2>References</h2>
+  <div class="ref-card">
+    <a href="https://www.asynctote.com">asynctote — Caching &amp; System Design Fundamentals</a>
+    <div class="desc">Use this for the fundamentals layer: LRU, LFU, consistent hashing, cache invalidation patterns</div>
+  </div>
+  <div class="ref-card">
+    <a href="https://github.com/LMCache/LMCache">LMCache — 8.7k★ open-source KV cache layer</a>
+    <div class="desc">Real project this problem connects to. Their cache engine needs smarter eviction policies.</div>
+  </div>
+  <div class="ref-card">
+    <a href="https://arxiv.org/abs/2305.02563">"Adaptive Cache Policy with RL" — arXiv 2305.02563</a>
+    <div class="desc">Prior work using RL for cache eviction. BO has advantages: sample efficiency, uncertainty estimates.</div>
+  </div>
+  <div class="ref-card">
+    <a href="https://en.wikipedia.org/wiki/Cache_replacement_policies">Wikipedia — Cache Replacement Policies</a>
+    <div class="desc">Reference for LRU, LFU, ARC, 2Q, FIFO, and the theory behind each.</div>
+  </div>
+
+  <h2>The Problem</h2>
+  <p>A cache has finite capacity. When a new item arrives and the cache is full, something must be evicted. The eviction policy decides what.</p>
+  <p>Hand-tuned policies (LRU, LFU, ARC) make assumptions about the workload: LRU assumes recent access predicts future access, LFU assumes frequency predicts future access. But real workloads are <em>non-stationary</em> — access patterns shift throughout the day.</p>
+  <p><strong>Can we frame cache eviction as a Bayesian optimization problem?</strong> Treat the cache's hit rate as a black-box function <code>f(policy_params, workload_slice)</code> and search for the policy that maximizes it under shifting workloads.</p>
+
+  <h2>Interactive: The Flow of a Cache Miss</h2>
+  <p>Click through each stage to see how a cache miss propagates — and where a BO-optimized policy would intervene.</p>
+
+  <div class="interactive-flow">
+    <div class="flow-controls">
+      <button class="flow-btn active" data-stage="1">① Request arrives</button>
+      <button class="flow-btn" data-stage="2">② Miss → fetch from origin</button>
+      <button class="flow-btn" data-stage="3">③ Eviction decision</button>
+      <button class="flow-btn" data-stage="4">④ BO-optimized policy</button>
+      <button class="flow-btn" data-stage="5">⑤ Adapt over time</button>
+    </div>
+
+    <div class="flow-content visible" data-stage="1">
+┌─ Request ─────────────────────────────────────────────────┐
+│  GET /models/llama-7b/token-512                            │
+│  Client: vLLM inference server                             │
+│  Cache key: kv-cache:llama-7b:seq-512                      │
+└───────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─ Cache Lookup ────────────────────────────────────────────┐
+│  Cache state:                                              │
+│  ┌──────┬──────────┬──────────────┬──────────┐             │
+│  │ key  │ freq     │ last_access  │ ttl      │             │
+│  ├──────┼──────────┼──────────────┼──────────┤             │
+│  │ seq_a│ 142      │ 12.3s ago    │ 300s     │             │
+│  │ seq_b│ 89       │ 45.1s ago    │ 120s     │             │
+│  │ seq_c│ 12       │ 2.1s ago     │ 30s      │             │
+│  │ ...  │ ...      │ ...          │ ...      │             │
+│  └──────┴──────────┴──────────────┴──────────┘             │
+│  HIT!  → Return cached tensor (10µs)                       │
+│  MISS! → Go to origin (100ms fetch)                        │
+└───────────────────────────────────────────────────────────┘
+    </div>
+
+    <div class="flow-content" data-stage="2">
+When a MISS happens:
+
+┌─ Origin Fetch ────────────────────────────────────────────┐
+│  1. Compute KV tensor for the missing seq                  │
+│  2. Time: ~100-500ms (GPU compute)                         │
+│  3. Tensor size: ~2-8 MB per token position                │
+│  4. Now cache must store this new entry                    │
+└───────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─ Cache Full? ─────────────────────────────────────────────┐
+│  If cache has free slots:  → Insert new entry, done.       │
+│                                                             │
+│  If cache is at capacity:                                   │
+│    → Must EVICT an existing entry                           │
+│    → WHICH ONE gets evicted?                                │
+│    → This is the policy decision                            │
+└───────────────────────────────────────────────────────────┘
+    </div>
+
+    <div class="flow-content" data-stage="3">
+Eviction policies answer: "Who gets kicked out?"
+
+┌─ Policy Comparison ───────────────────────────────────────┐
+│                                                             │
+│  LRU: Evict the oldest-accessed entry                       │
+│    Assumes: recently used → will be reused                  │
+│    Works for: recency-heavy workloads                       │
+│    Fails when: a burst of one-time requests                 │
+│    flushes the hot cache                                    │
+│                                                             │
+│  LFU: Evict the least-frequently accessed                   │
+│    Assumes: frequency → future importance                   │
+│    Works for: stable popularity distributions               │
+│    Fails when: a once-popular item becomes irrelevant       │
+│    but has high count                                       │
+│                                                             │
+│  ARC: Adaptive — switches between LRU/LFU                   │
+│    based on recent workload patterns                        │
+│    Better than either alone, but still                      │
+│    uses heuristics, not optimization                        │
+│                                                             │
+│  BO-Policy: Learn from trace data (see next stage)          │
+└───────────────────────────────────────────────────────────┘
+    </div>
+
+    <div class="flow-content" data-stage="4">
+The BO approach frames eviction as optimization:
+
+┌─ BO-Tuned Policy ──────────────────────────────────────────┐
+│                                                              │
+│  Objective: maximize hit_rate(θ, trace)                      │
+│                                                              │
+│  Parameters θ = [α, β, γ, window_size, ...]                  │
+│    α: weight given to recency                                │
+│    β: weight given to frequency                              │
+│    γ: weight given to entry size                             │
+│    window_size: lookback window for stats                    │
+│                                                              │
+│  Score(key) = α · recency(key) + β · frequency(key)          │
+│                        - γ · size(key)                       │
+│                                                              │
+│  Instead of hand-tuning α,β,γ:                               │
+│    → GP surrogate learns the mapping f(θ) → hit_rate         │
+│      over a trace window                                     │
+│    → EI acquisition proposes next θ                          │
+│    → After N evals, the best θ is deployed                   │
+│                                                              │
+│  Warm-start from known-good defaults                         │
+│  (ARC's parameters = starting point)                         │
+└───────────────────────────────────────────────────────────┘
+    </div>
+
+    <div class="flow-content" data-stage="5">
+The beautiful part: workloads drift, and BO adapts.
+
+┌─ Adaptive Loop ────────────────────────────────────────────┐
+│                                                              │
+│  Timeline:                                                   │
+│                                                              │
+│  08:00 — Workload: batch processing jobs                     │
+│          Best policy: LFU-heavy (α=0.2, β=0.7)              │
+│                                                              │
+│  12:00 — Workload: interactive users                         │
+│          Best policy: LRU-heavy (α=0.7, β=0.2)              │
+│                                                              │
+│  18:00 — Workload: mixed (both)                              │
+│          Best policy: balanced (α=0.4, β=0.4)                │
+│                                                              │
+│  Every N minutes: collect trace window,                      │
+│  re-optimize θ on the recent window,                         │
+│  deploy the new policy.                                      │
+│                                                              │
+│  BO's advantage over RL: sample efficiency.                  │
+│  A GP needs ~20-50 evaluations to converge;                  │
+│  RL needs thousands of online interactions.                  │
+│  Less disruption to production traffic.                      │
+└───────────────────────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <h2>The SWE Gaps We'll Fill</h2>
+  <p>To build a POC of this, we need to learn:</p>
+  <ol style="margin:0.8em 0; padding-left:1.5em; color:var(--text-tertiary);">
+    <li style="margin:0.4em 0;"><strong>Caching fundamentals</strong> — LRU, LFU, ARC, 2Q. Implement a minimal LRU in Python. <em>(Sat, Week 1)</em></li>
+    <li style="margin:0.4em 0;"><strong>Distributed cache architecture</strong> — Consistent hashing, replication, fault tolerance. How Redis/Memcached/LMCache work. <em>(Wed, Week 2)</em></li>
+    <li style="margin:0.4em 0;"><strong>Request trace analysis</strong> — Collecting, parsing, and analyzing real cache traces. Feature extraction for the GP model. <em>(Sat, Week 2)</em></li>
+    <li style="margin:0.4em 0;"><strong>BO for systems optimization</strong> — Setting up GP surrogate + EI for the cache problem. <em>(Wed, Week 3)</em></li>
+    <li style="margin:0.4em 0;"><strong>POC: BO-tuned cache simulator</strong> — Compare against LRU, LFU, ARC on synthetic traces. <em>(Sat, Week 3)</em></li>
+    <li style="margin:0.4em 0;"><strong>A/B testing &amp; deployment</strong> — Shadow mode, canary, metrics for ML-tuned system policies. <em>(Wed, Week 4)</em></li>
+  </ol>
+
+  <hr>
+
+  <div class="sharp-q" onclick="this.nextElementSibling.classList.toggle('visible')">
+    ✋ Sharp Question — click to reveal
+  </div>
+  <div class="sharp-a">
+    <p><strong>You're tasked with designing a BO-tuned cache for LLM inference (KV-cache).</strong></p>
+    <p>The request trace shows a Zipf-like distribution: the top 20% of sequences account for 80% of requests. But every 30 minutes, a batch of ~500 novel sequences arrives (new conversations), which are never seen again.</p>
+    <p><strong>Question:</strong> How would you design the <code>Score(key)</code> function to handle both the Zipf hot set and the novel-arrival bursts? What parameters would you expose to the BO optimizer? Sketch a formula.</p>
+    <p style="color:var(--text-muted); font-size:0.85em; margin-top:1em;"><em>(Think about it — we'll revisit in Saturday's tutorial.)</em></p>
+  </div>
+
+  <hr>
+
+  <p><strong>Next:</strong> Saturday, Week 1 — Tutorial 2: Implement a minimal LRU in Python. Run it against a synthetic trace. <code>pip install numpy matplotlib</code> ready.</p>
+</div>
+
+<script>
+document.querySelectorAll('.flow-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.flow-content').forEach(c => c.classList.remove('visible'));
+    btn.classList.add('active');
+    document.querySelector(`.flow-content[data-stage="${btn.dataset.stage}"]`).classList.add('visible');
+  });
+});
+</script>
+</body>
+</html>
